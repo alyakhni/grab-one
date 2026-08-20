@@ -1,0 +1,44 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    /* 1. تغيير الخط الافتراضي إلى Poppins ليطابق خط مشروعك */
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* 2. إضافة الألوان المخصصة لمشروعك هنا داخل كتلة @theme */
+    --color-primary: #e63946;
+    --color-secondary: #1d3557;
+    --color-dark: #111827;
+    --color-light: #f3f4f6;
+    --color-brand-bg: #f3f1ee;
+}
+
+/* 3. التنسيقات الخاصة بك أضفها هنا في الأسفل خارج كتلة الـ theme */
+html { 
+  scroll-behavior: smooth; 
+}
+
+.modal-open { 
+  overflow: hidden; 
+}
+
+/* تخصيص شريط التمرير للمودال */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
