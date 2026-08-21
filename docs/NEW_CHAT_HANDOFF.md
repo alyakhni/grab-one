@@ -28,7 +28,8 @@ Upload/open the current repository and say:
 - Guide content should initially be source-controlled in `frontend/src/data/guides.ts` once Next.js exists.
 - SEO/GEO are core requirements.
 - Avoid low-value page proliferation.
-- Laravel 13 upgrade decision is deferred.
+- Current approved runtime/framework baseline: PHP 8.5 + Laravel 13 + Filament 5.x + Livewire 4.x.
+- Major framework/runtime upgrades are deferred unless explicitly approved.
 
 ## Important limitation
 

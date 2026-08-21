@@ -24,7 +24,7 @@ Online payment is intentionally out of scope at this stage.
 ## Current architecture
 
 ```text
-Laravel 12
+Laravel 13
 ├── Blade public frontend
 ├── BookingController
 ├── ContactController
@@ -152,11 +152,19 @@ This gives us:
 - easy static page generation
 - easy migration to CMS later if content volume actually grows
 
+## Current technical baseline
+
+- PHP 8.5
+- Laravel 13
+- Filament 5.x
+- Livewire 4.x
+
+The upgrade to Laravel 13 has been completed. Major runtime/framework upgrades should only be made when explicitly approved.
+
 ## Deferred decisions
 
 The following are intentionally deferred:
 
-- Laravel 12 -> Laravel 13 upgrade
 - online payments
 - Brevo/email automation details
 - full real-time vehicle inventory engine

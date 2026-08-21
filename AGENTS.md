@@ -10,8 +10,10 @@ The product goal is not merely a landing page. It should become a fast, visually
 
 ## 2. Current codebase
 
-- Backend: Laravel 12
+- Runtime: PHP 8.5
+- Backend: Laravel 13
 - Admin: Filament 5.x
+- Reactive stack: Livewire 4.x
 - Current public frontend: Laravel Blade + Tailwind
 - Current public site: mostly a one-page landing page
 - Current booking behavior: creates a booking request; there is no online checkout
@@ -19,7 +21,8 @@ The product goal is not merely a landing page. It should become a fast, visually
 - Current fleet data is partly hard-coded/config-based
 - Git baseline was created from the uploaded project before architecture documentation was added
 
-Laravel 13 is NOT a current decision. Do not upgrade framework/runtime versions unless a later task explicitly approves it.
+The approved runtime/framework baseline is PHP 8.5 + Laravel 13 + Filament 5.x + Livewire 4.x.
+Do not upgrade major framework/runtime versions unless a later task explicitly approves it.
 
 ## 3. Approved target architecture
 
