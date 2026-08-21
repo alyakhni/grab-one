@@ -16,8 +16,10 @@ These files preserve the product and architecture decisions across chats and age
 
 ## Current stack
 
-- Laravel 12
+- PHP 8.5
+- Laravel 13
 - Filament 5.x
+- Livewire 4.x
 - Blade/Tailwind public frontend
 
 ## Planned direction
