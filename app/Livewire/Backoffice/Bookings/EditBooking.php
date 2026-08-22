@@ -67,7 +67,7 @@ class EditBooking extends Component
 
         session()->flash('success', 'Booking updated successfully.');
 
-        return $this->redirectRoute('backoffice.bookings.index');
+        return $this->redirectRoute('admin.bookings.index');
     }
 
     public function delete()
@@ -76,7 +76,7 @@ class EditBooking extends Component
 
         session()->flash('success', 'Booking deleted successfully.');
 
-        return $this->redirectRoute('backoffice.bookings.index');
+        return $this->redirectRoute('admin.bookings.index');
     }
 
     protected function rules(): array

@@ -46,7 +46,7 @@ class EditContact extends Component
 
         session()->flash('success', 'Contact message updated successfully.');
 
-        return $this->redirectRoute('backoffice.contacts.index');
+        return $this->redirectRoute('admin.contacts.index');
     }
 
     public function delete()
@@ -55,7 +55,7 @@ class EditContact extends Component
 
         session()->flash('success', 'Contact message deleted successfully.');
 
-        return $this->redirectRoute('backoffice.contacts.index');
+        return $this->redirectRoute('admin.contacts.index');
     }
 
     protected function rules(): array

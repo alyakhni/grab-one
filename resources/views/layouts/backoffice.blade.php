@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>{{ $title ?? 'Grab One Backoffice' }}</title>
+    <title>{{ $title ?? 'Grab One Admin' }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
@@ -22,7 +22,7 @@
                 </div>
 
                 <div class="text-xs font-medium uppercase tracking-widest text-gray-400">
-                    Backoffice
+                    Admin
                 </div>
             </div>
         </div>
@@ -30,9 +30,9 @@
         <nav class="flex gap-2 overflow-x-auto px-4 pb-4 lg:block lg:space-y-2">
 
             <a
-                href="{{ route('backoffice.dashboard') }}"
+                href="{{ route('admin.dashboard') }}"
                 class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
-                    {{ request()->routeIs('backoffice.dashboard')
+                    {{ request()->routeIs('admin.dashboard')
                         ? 'bg-secondary text-white'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-secondary' }}"
             >
@@ -40,9 +40,9 @@
             </a>
 
             <a
-                href="{{ route('backoffice.bookings.index') }}"
+                href="{{ route('admin.bookings.index') }}"
                 class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
-                    {{ request()->routeIs('backoffice.bookings.*')
+                    {{ request()->routeIs('admin.bookings.*')
                         ? 'bg-secondary text-white'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-secondary' }}"
             >
@@ -50,27 +50,14 @@
             </a>
 
             <a
-                href="{{ route('backoffice.contacts.index') }}"
+                href="{{ route('admin.contacts.index') }}"
                 class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
-                    {{ request()->routeIs('backoffice.contacts.*')
+                    {{ request()->routeIs('admin.contacts.*')
                         ? 'bg-secondary text-white'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-secondary' }}"
             >
                 Contacts
             </a>
-
-            <div class="hidden pt-4 lg:block">
-                <div class="px-4 pb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                    Migration
-                </div>
-
-                <a
-                    href="/admin"
-                    class="block rounded-lg px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-secondary"
-                >
-                    Legacy Filament Admin
-                </a>
-            </div>
 
         </nav>
     </aside>
@@ -90,7 +77,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('backoffice.logout') }}">
+                <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf
 
                     <button

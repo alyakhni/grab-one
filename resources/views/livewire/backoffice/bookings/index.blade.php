@@ -11,7 +11,7 @@
         </div>
 
         <a
-            href="{{ route('backoffice.bookings.create') }}"
+            href="{{ route('admin.bookings.create') }}"
             class="inline-flex rounded-lg bg-secondary px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
         >
             Create Booking
@@ -193,7 +193,7 @@
                             <td class="whitespace-nowrap px-4 py-4 text-right">
                                 <div class="flex justify-end gap-2">
                                     <a
-                                        href="{{ route('backoffice.bookings.edit', $booking) }}"
+                                        href="{{ route('admin.bookings.edit', $booking) }}"
                                         class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                                     >
                                         Edit

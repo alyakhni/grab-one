@@ -20,11 +20,11 @@ Route::get('/', function () {
 Route::post('/book-now', [BookingController::class, 'store'])->name('booking.store');
 Route::post('/contact-us', [ContactController::class, 'send'])->name('contact.send');
 
-Route::livewire('/backoffice/login', Login::class)
+Route::livewire('/admin/login', Login::class)
     ->name('login');
 
-Route::prefix('backoffice')
-    ->name('backoffice.')
+Route::prefix('admin')
+    ->name('admin.')
     ->middleware('auth')
     ->group(function (): void {
         Route::livewire('/', Dashboard::class)

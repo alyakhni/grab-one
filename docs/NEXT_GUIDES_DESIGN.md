@@ -147,7 +147,7 @@ Advantages:
 - easy to statically render
 - fast
 - simple to test for duplicate slugs/missing SEO fields
-- can migrate to Laravel/Filament CMS later without changing public URLs
+- can migrate to a Laravel/Livewire-managed CMS later without changing public URLs
 
 ## When to move Guides to a CMS
 

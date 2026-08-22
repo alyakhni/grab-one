@@ -20,7 +20,7 @@ class BackofficeAccessTest extends TestCase
 
     public function test_guest_is_redirected_to_login_from_dashboard(): void
     {
-        $this->get(route('backoffice.dashboard'))
+        $this->get(route('admin.dashboard'))
             ->assertRedirect(route('login'));
     }
 
@@ -29,7 +29,7 @@ class BackofficeAccessTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->get(route('backoffice.dashboard'))
+            ->get(route('admin.dashboard'))
             ->assertOk();
     }
 
@@ -44,7 +44,7 @@ class BackofficeAccessTest extends TestCase
             ->set('email', 'admin@example.com')
             ->set('password', 'password123')
             ->call('login')
-            ->assertRedirect(route('backoffice.dashboard'));
+            ->assertRedirect(route('admin.dashboard'));
 
         $this->assertAuthenticatedAs($user);
     }
@@ -54,7 +54,7 @@ class BackofficeAccessTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->post(route('backoffice.logout'))
+            ->post(route('admin.logout'))
             ->assertRedirect(route('login'));
 
         $this->assertGuest();

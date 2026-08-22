@@ -33,7 +33,7 @@ class BookingController extends Controller
         
         // 3. إعطاء قيم افتراضية للحقول الباقية
         $validated['status'] = 'pending';
-        $validated['total_price'] = 0.00; // الإدمن سيقوم بتحديث السعر من لوحة Filament
+        $validated['total_price'] = 0.00; // الإدمن سيقوم بتحديث السعر من لوحة الإدارة
 
         // 4. الحفظ في قاعدة البيانات
         Booking::create($validated);

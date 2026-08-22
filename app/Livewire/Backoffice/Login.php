@@ -22,7 +22,7 @@ class Login extends Component
     public function mount(): void
     {
         if (Auth::check()) {
-            $this->redirectRoute('backoffice.dashboard');
+            $this->redirectRoute('admin.dashboard');
         }
     }
 
@@ -66,7 +66,7 @@ class Login extends Component
 
         session()->regenerate();
 
-        return $this->redirectIntended(route('backoffice.dashboard'));
+        return $this->redirectIntended(route('admin.dashboard'));
     }
 
     protected function throttleKey(): string

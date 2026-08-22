@@ -18,14 +18,14 @@ These files preserve the product and architecture decisions across chats and age
 
 - PHP 8.5
 - Laravel 13
-- Filament 5.x
+- Custom Laravel + Livewire admin
 - Livewire 4.x
 - Blade/Tailwind public frontend
 
 ## Planned direction
 
 - Laravel remains the backend/business layer
-- Filament remains admin/operations
+- Custom Laravel + Livewire admin at `/admin` handles admin/operations
 - Next.js will become the public frontend
 - Booking is request + confirmation; no online payment checkout at this stage
 - Evergreen Guide content will initially live in a small typed source file in the Next.js frontend

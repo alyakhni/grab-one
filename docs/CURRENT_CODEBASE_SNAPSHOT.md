@@ -7,8 +7,8 @@ This document describes the uploaded Grab One code at the point the Git baseline
 From `composer.json`:
 
 - PHP: `^8.2`
-- Laravel: `^12.0`
-- Filament: `^5.5`
+- Laravel: `^13.0`
+- Admin: custom Laravel + Livewire 4.x
 
 Frontend build dependencies are currently Laravel Vite/Tailwind based. There is no Next.js app yet.
 
@@ -38,8 +38,8 @@ This is why the current public experience behaves as a one-page site.
 - Booking
 - Contact
 - User
-- Filament Booking Resource
-- Filament Contact Resource
+- Custom Livewire booking management at `/admin/bookings`
+- Custom Livewire contact management at `/admin/contacts`
 
 ## Fleet
 

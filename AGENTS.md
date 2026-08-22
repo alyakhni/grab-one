@@ -12,7 +12,7 @@ The product goal is not merely a landing page. It should become a fast, visually
 
 - Runtime: PHP 8.5
 - Backend: Laravel 13
-- Admin: Filament 5.x
+- Admin: Custom Laravel + Livewire 4.x
 - Reactive stack: Livewire 4.x
 - Current public frontend: Laravel Blade + Tailwind
 - Current public site: mostly a one-page landing page
@@ -21,7 +21,7 @@ The product goal is not merely a landing page. It should become a fast, visually
 - Current fleet data is partly hard-coded/config-based
 - Git baseline was created from the uploaded project before architecture documentation was added
 
-The approved runtime/framework baseline is PHP 8.5 + Laravel 13 + Filament 5.x + Livewire 4.x.
+The approved runtime/framework baseline is PHP 8.5 + Laravel 13 + Livewire 4.x.
 Do not upgrade major framework/runtime versions unless a later task explicitly approves it.
 
 ## 3. Approved target architecture
@@ -40,13 +40,13 @@ Laravel business backend
     |
     +--> Database
     |
-    +--> Filament admin
+    +--> Custom Laravel + Livewire admin
 ```
 
 Rules:
 
 1. Laravel remains the business backend and source of truth for transactional data.
-2. Filament remains the admin/operations interface.
+2. The custom Laravel + Livewire admin at `/admin` is the admin/operations interface.
 3. Next.js is planned for the public website.
 4. Do not let Next.js query the Laravel database directly.
 5. Do not keep duplicate business rules in Laravel and Next.js.
@@ -194,7 +194,7 @@ Acceptance:
 
 ## 9. Current phase
 
-We are currently in architecture/foundation work.
+The custom Laravel + Livewire admin migration is complete. The operational admin interface is `/admin`.
 
 Before major frontend migration:
 

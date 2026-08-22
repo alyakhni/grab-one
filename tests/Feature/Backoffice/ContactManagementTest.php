@@ -17,7 +17,7 @@ class ContactManagementTest extends TestCase
 
     public function test_guest_cannot_access_contacts(): void
     {
-        $this->get(route('backoffice.contacts.index'))
+        $this->get(route('admin.contacts.index'))
             ->assertRedirect(route('login'));
     }
 
@@ -30,7 +30,7 @@ class ContactManagementTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('backoffice.contacts.index'))
+            ->get(route('admin.contacts.index'))
             ->assertOk()
             ->assertSee($contact->name);
     }
@@ -110,7 +110,7 @@ class ContactManagementTest extends TestCase
             ->set('is_read', false)
             ->call('save')
             ->assertHasNoErrors()
-            ->assertRedirect(route('backoffice.contacts.index'));
+            ->assertRedirect(route('admin.contacts.index'));
 
         $this->assertDatabaseHas('contacts', [
             'name' => 'New Customer',
@@ -132,7 +132,7 @@ class ContactManagementTest extends TestCase
             ->set('is_read', true)
             ->call('save')
             ->assertHasNoErrors()
-            ->assertRedirect(route('backoffice.contacts.index'));
+            ->assertRedirect(route('admin.contacts.index'));
 
         $this->assertDatabaseHas('contacts', [
             'id' => $contact->id,
@@ -168,7 +168,7 @@ class ContactManagementTest extends TestCase
         Livewire::actingAs($user)
             ->test(EditContact::class, ['contact' => $contact])
             ->call('delete')
-            ->assertRedirect(route('backoffice.contacts.index'));
+            ->assertRedirect(route('admin.contacts.index'));
 
         $this->assertDatabaseMissing('contacts', [
             'id' => $contact->id,
