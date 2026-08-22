@@ -40,6 +40,16 @@
             </a>
 
             <a
+                href="{{ route('backoffice.bookings.index') }}"
+                class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
+                    {{ request()->routeIs('backoffice.bookings.*')
+                        ? 'bg-secondary text-white'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-secondary' }}"
+            >
+                Bookings
+            </a>
+
+            <a
                 href="{{ route('backoffice.contacts.index') }}"
                 class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
                     {{ request()->routeIs('backoffice.contacts.*')
