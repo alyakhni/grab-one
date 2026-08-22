@@ -39,6 +39,16 @@
                 Dashboard
             </a>
 
+            <a
+                href="{{ route('backoffice.bookings.index') }}"
+                class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
+                    {{ request()->routeIs('backoffice.bookings.*')
+                        ? 'bg-secondary text-white'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-secondary' }}"
+            >
+                Bookings
+            </a>
+
             <div class="hidden pt-4 lg:block">
                 <div class="px-4 pb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                     Migration
