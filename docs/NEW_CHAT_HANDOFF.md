@@ -19,7 +19,7 @@ Upload/open the current repository and say:
 
 ## Durable decisions already documented
 
-- Laravel + Filament remain backend/admin.
+- Laravel remains the backend/business layer, with the custom Laravel + Livewire admin at `/admin`.
 - Next.js is the planned public frontend.
 - No online payment checkout at this stage.
 - Booking is request + confirmation; payment is direct/in person.
@@ -28,7 +28,7 @@ Upload/open the current repository and say:
 - Guide content should initially be source-controlled in `frontend/src/data/guides.ts` once Next.js exists.
 - SEO/GEO are core requirements.
 - Avoid low-value page proliferation.
-- Current approved runtime/framework baseline: PHP 8.5 + Laravel 13 + Filament 5.x + Livewire 4.x.
+- Current approved runtime/framework baseline: PHP 8.5 + Laravel 13 + Livewire 4.x.
 - Major framework/runtime upgrades are deferred unless explicitly approved.
 
 ## Important limitation

@@ -30,7 +30,7 @@ Laravel 13
 ├── ContactController
 ├── Booking model
 ├── Contact model
-└── Filament admin
+└── Custom Laravel + Livewire admin
 ```
 
 The public frontend is currently mostly one landing page assembled from Blade sections.
@@ -51,7 +51,7 @@ The public frontend is currently mostly one landing page assembled from Blade se
            business rules + API layer
                  /             \
                 v               v
-             Database       Filament Admin
+             Database       Custom Admin
 ```
 
 ### Responsibility split
@@ -85,7 +85,7 @@ Owns:
 - operational logic
 - future email/event orchestration
 
-#### Filament
+#### Custom Laravel + Livewire Admin
 
 Owns:
 
@@ -156,7 +156,7 @@ This gives us:
 
 - PHP 8.5
 - Laravel 13
-- Filament 5.x
+- Custom admin: Laravel + Livewire
 - Livewire 4.x
 
 The upgrade to Laravel 13 has been completed. Major runtime/framework upgrades should only be made when explicitly approved.

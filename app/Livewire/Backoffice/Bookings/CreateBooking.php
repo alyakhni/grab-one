@@ -46,7 +46,7 @@ class CreateBooking extends Component
 
         session()->flash('success', 'Booking created successfully.');
 
-        return $this->redirectRoute('backoffice.bookings.index');
+        return $this->redirectRoute('admin.bookings.index');
     }
 
     protected function rules(): array

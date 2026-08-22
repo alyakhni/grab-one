@@ -17,7 +17,7 @@ class BookingManagementTest extends TestCase
 
     public function test_guest_cannot_access_bookings(): void
     {
-        $this->get(route('backoffice.bookings.index'))
+        $this->get(route('admin.bookings.index'))
             ->assertRedirect(route('login'));
     }
 
@@ -30,7 +30,7 @@ class BookingManagementTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('backoffice.bookings.index'))
+            ->get(route('admin.bookings.index'))
             ->assertOk()
             ->assertSee($booking->full_name);
     }
@@ -96,7 +96,7 @@ class BookingManagementTest extends TestCase
             ->set('status', 'pending')
             ->call('save')
             ->assertHasNoErrors()
-            ->assertRedirect(route('backoffice.bookings.index'));
+            ->assertRedirect(route('admin.bookings.index'));
 
         $this->assertDatabaseHas('bookings', [
             'full_name' => 'New Customer',
@@ -118,7 +118,7 @@ class BookingManagementTest extends TestCase
             ->set('total_price', '250.00')
             ->call('save')
             ->assertHasNoErrors()
-            ->assertRedirect(route('backoffice.bookings.index'));
+            ->assertRedirect(route('admin.bookings.index'));
 
         $this->assertDatabaseHas('bookings', [
             'id' => $booking->id,
@@ -136,7 +136,7 @@ class BookingManagementTest extends TestCase
         Livewire::actingAs($user)
             ->test(EditBooking::class, ['booking' => $booking])
             ->call('delete')
-            ->assertRedirect(route('backoffice.bookings.index'));
+            ->assertRedirect(route('admin.bookings.index'));
 
         $this->assertDatabaseMissing('bookings', [
             'id' => $booking->id,

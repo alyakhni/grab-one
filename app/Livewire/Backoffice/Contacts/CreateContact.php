@@ -32,7 +32,7 @@ class CreateContact extends Component
 
         session()->flash('success', 'Contact message created successfully.');
 
-        return $this->redirectRoute('backoffice.contacts.index');
+        return $this->redirectRoute('admin.contacts.index');
     }
 
     protected function rules(): array

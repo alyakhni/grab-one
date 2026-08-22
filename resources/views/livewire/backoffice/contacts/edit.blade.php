@@ -11,7 +11,7 @@
         </div>
 
         <a
-            href="{{ route('backoffice.contacts.index') }}"
+            href="{{ route('admin.contacts.index') }}"
             class="inline-flex rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
         >
             Back to Contacts
@@ -37,7 +37,7 @@
 
             <div class="flex justify-end gap-3">
                 <a
-                    href="{{ route('backoffice.contacts.index') }}"
+                    href="{{ route('admin.contacts.index') }}"
                     class="rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                 >
                     Cancel
