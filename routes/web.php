@@ -3,6 +3,9 @@
 use App\Http\Controllers\Backoffice\LogoutController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ContactController;
+use App\Livewire\Backoffice\Contacts\CreateContact;
+use App\Livewire\Backoffice\Contacts\EditContact;
+use App\Livewire\Backoffice\Contacts\Index as ContactsIndex;
 use App\Livewire\Backoffice\Dashboard;
 use App\Livewire\Backoffice\Login;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +26,15 @@ Route::prefix('backoffice')
     ->group(function (): void {
         Route::livewire('/', Dashboard::class)
             ->name('dashboard');
+
+        Route::livewire('/contacts', ContactsIndex::class)
+            ->name('contacts.index');
+
+        Route::livewire('/contacts/create', CreateContact::class)
+            ->name('contacts.create');
+
+        Route::livewire('/contacts/{contact}/edit', EditContact::class)
+            ->name('contacts.edit');
 
         Route::post('/logout', LogoutController::class)
             ->name('logout');

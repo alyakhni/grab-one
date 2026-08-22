@@ -9,6 +9,12 @@ class Contact extends Model
 {
     use HasFactory;
 
+    public const STATUSES = [
+        'pending' => 'Pending',
+        'working_on_it' => 'Working on it',
+        'resolved' => 'Resolved',
+    ];
+
     protected $fillable = [
         'name',
         'email',
@@ -17,4 +23,11 @@ class Contact extends Model
         'is_read',
         'status',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_read' => 'boolean',
+        ];
+    }
 }
