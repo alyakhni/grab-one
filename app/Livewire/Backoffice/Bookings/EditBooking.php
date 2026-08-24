@@ -4,6 +4,7 @@ namespace App\Livewire\Backoffice\Bookings;
 
 use App\Models\Booking;
 use App\Services\BookingCartAssignmentService;
+use App\Services\CustomerIdentityService;
 use App\Services\FleetAvailabilityService;
 use App\Support\BookingCartSelection;
 use Illuminate\Support\Arr;
@@ -226,6 +227,17 @@ class EditBooking extends Component
             $requestedStatus,
             $assignmentData
         ): void {
+            $customer = app(
+                CustomerIdentityService::class
+            )->resolveForBooking(
+                $bookingData['full_name'],
+                $bookingData['email'],
+                $bookingData['phone']
+            );
+
+            $bookingData['customer_id'] =
+                $customer?->id;
+
             $this->booking->update(
                 $bookingData
             );

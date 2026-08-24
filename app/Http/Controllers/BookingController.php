@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Services\CustomerIdentityService;
 use App\Support\BookingCartSelection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -89,7 +90,20 @@ class BookingController extends Controller
             $bookingData,
             $itemQuantities
         ): void {
-            $booking = Booking::create($bookingData);
+            $customer = app(
+                CustomerIdentityService::class
+            )->resolveForBooking(
+                $bookingData['full_name'],
+                $bookingData['email'],
+                $bookingData['phone']
+            );
+
+            $bookingData['customer_id'] =
+                $customer?->id;
+
+            $booking = Booking::create(
+                $bookingData
+            );
 
             foreach ($itemQuantities as $cartType => $quantity) {
                 $booking->items()->create([

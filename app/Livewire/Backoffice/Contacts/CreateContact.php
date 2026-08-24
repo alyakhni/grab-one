@@ -3,6 +3,7 @@
 namespace App\Livewire\Backoffice\Contacts;
 
 use App\Models\Contact;
+use App\Services\CustomerIdentityService;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -26,7 +27,19 @@ class CreateContact extends Component
 
     public function save()
     {
-        $validated = $this->validate($this->rules());
+        $validated = $this->validate(
+            $this->rules()
+        );
+
+        $customer = app(
+            CustomerIdentityService::class
+        )->findExistingForContact(
+            $validated['email'],
+            $validated['phone']
+        );
+
+        $validated['customer_id'] =
+            $customer?->id;
 
         Contact::create($validated);
 

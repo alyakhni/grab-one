@@ -3,6 +3,7 @@
 namespace App\Livewire\Backoffice\Contacts;
 
 use App\Models\Contact;
+use App\Services\CustomerIdentityService;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -40,9 +41,23 @@ class EditContact extends Component
 
     public function save()
     {
-        $validated = $this->validate($this->rules());
+        $validated = $this->validate(
+            $this->rules()
+        );
 
-        $this->contact->update($validated);
+        $customer = app(
+            CustomerIdentityService::class
+        )->findExistingForContact(
+            $validated['email'],
+            $validated['phone']
+        );
+
+        $validated['customer_id'] =
+            $customer?->id;
+
+        $this->contact->update(
+            $validated
+        );
 
         session()->flash('success', 'Contact message updated successfully.');
 

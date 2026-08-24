@@ -3,6 +3,7 @@
 namespace App\Livewire\Backoffice\Bookings;
 
 use App\Models\Booking;
+use App\Services\CustomerIdentityService;
 use App\Support\BookingCartSelection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -84,6 +85,17 @@ class CreateBooking extends Component
             $bookingData,
             $itemQuantities
         ): void {
+            $customer = app(
+                CustomerIdentityService::class
+            )->resolveForBooking(
+                $bookingData['full_name'],
+                $bookingData['email'],
+                $bookingData['phone']
+            );
+
+            $bookingData['customer_id'] =
+                $customer?->id;
+
             $booking = Booking::create(
                 $bookingData
             );
