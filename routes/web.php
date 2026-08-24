@@ -12,6 +12,8 @@ use App\Livewire\Backoffice\Carts\Index as CartsIndex;
 use App\Livewire\Backoffice\Contacts\CreateContact;
 use App\Livewire\Backoffice\Contacts\EditContact;
 use App\Livewire\Backoffice\Contacts\Index as ContactsIndex;
+use App\Livewire\Backoffice\Customers\Index as CustomersIndex;
+use App\Livewire\Backoffice\Customers\Show as CustomerShow;
 use App\Livewire\Backoffice\Dashboard;
 use App\Livewire\Backoffice\Login;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +55,12 @@ Route::prefix('admin')
 
         Route::livewire('/carts/{cart}/edit', EditCart::class)
             ->name('carts.edit');
+
+        Route::livewire('/customers', CustomersIndex::class)
+            ->name('customers.index');
+
+        Route::livewire('/customers/{customer}', CustomerShow::class)
+            ->name('customers.show');
 
         Route::livewire('/contacts', ContactsIndex::class)
             ->name('contacts.index');

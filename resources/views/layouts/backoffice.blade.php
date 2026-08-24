@@ -60,6 +60,16 @@
             </a>
 
             <a
+                href="{{ route('admin.customers.index') }}"
+                class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
+                    {{ request()->routeIs('admin.customers.*')
+                        ? 'bg-secondary text-white'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-secondary' }}"
+            >
+                Customers
+            </a>
+
+            <a
                 href="{{ route('admin.contacts.index') }}"
                 class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
                     {{ request()->routeIs('admin.contacts.*')
