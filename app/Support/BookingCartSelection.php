@@ -50,7 +50,6 @@ final class BookingCartSelection
                 'nullable',
                 'integer',
                 'min:1',
-                'max:20',
             ];
         }
 

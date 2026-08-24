@@ -44,7 +44,9 @@ class CreateBooking extends Component
 
     public function save()
     {
-        $validated = $this->validate($this->rules());
+        $validated = $this->validate(
+            $this->rules()
+        );
 
         $itemQuantities =
             BookingCartSelection::itemQuantities(
@@ -82,13 +84,20 @@ class CreateBooking extends Component
             $bookingData,
             $itemQuantities
         ): void {
-            $booking = Booking::create($bookingData);
+            $booking = Booking::create(
+                $bookingData
+            );
 
-            foreach ($itemQuantities as $cartType => $quantity) {
-                $booking->items()->create([
-                    'cart_type' => $cartType,
-                    'quantity' => $quantity,
-                ]);
+            foreach (
+                $itemQuantities
+                as $cartType => $quantity
+            ) {
+                $booking
+                    ->items()
+                    ->create([
+                        'cart_type' => $cartType,
+                        'quantity' => $quantity,
+                    ]);
             }
         });
 
@@ -188,16 +197,27 @@ class CreateBooking extends Component
                     'required',
                     Rule::in(
                         array_keys(
-                            config(
-                                'grabone.booking_statuses',
-                                []
-                            )
+                            $this->createStatuses()
                         )
                     ),
                 ],
             ],
             BookingCartSelection::quantityRules()
         );
+    }
+
+    protected function createStatuses(): array
+    {
+        $statuses = config(
+            'grabone.booking_statuses',
+            []
+        );
+
+        unset(
+            $statuses['confirmed']
+        );
+
+        return $statuses;
     }
 
     public function render()
@@ -216,10 +236,14 @@ class CreateBooking extends Component
                 'selectionOptions' =>
                     BookingCartSelection::selectionOptions(),
 
-                'statuses' => config(
-                    'grabone.booking_statuses',
-                    []
-                ),
+                'statuses' =>
+                    $this->createStatuses(),
+
+                'showCartAssignments' =>
+                    false,
+
+                'availableCartsByType' =>
+                    [],
             ]
         );
     }

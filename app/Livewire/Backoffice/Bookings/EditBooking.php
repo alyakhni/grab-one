@@ -3,6 +3,8 @@
 namespace App\Livewire\Backoffice\Bookings;
 
 use App\Models\Booking;
+use App\Services\BookingCartAssignmentService;
+use App\Services\FleetAvailabilityService;
 use App\Support\BookingCartSelection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -29,22 +31,35 @@ class EditBooking extends Component
     public string $cart_selection = '';
     public array $cart_quantities = [];
 
+    public array $cart_assignments = [];
+
     public ?string $special_notes = null;
     public ?string $flight_number = null;
 
     public string $total_price = '0.00';
     public string $status = 'pending';
 
-    public function mount(Booking $booking): void
-    {
-        $booking->loadMissing('items');
+    public function mount(
+        Booking $booking
+    ): void {
+        $booking->loadMissing(
+            'items.assignments.cart'
+        );
 
-        $this->booking = $booking;
+        $this->booking =
+            $booking;
 
-        $this->full_name = $booking->full_name;
-        $this->email = $booking->email;
-        $this->phone = $booking->phone;
-        $this->hotel_name = $booking->hotel_name;
+        $this->full_name =
+            $booking->full_name;
+
+        $this->email =
+            $booking->email;
+
+        $this->phone =
+            $booking->phone;
+
+        $this->hotel_name =
+            $booking->hotel_name;
 
         $this->pickup_location =
             $booking->pickup_location;
@@ -72,13 +87,38 @@ class EditBooking extends Component
         $this->cart_quantities =
             BookingCartSelection::defaultQuantities();
 
-        foreach ($booking->items as $item) {
+        foreach (
+            BookingCartSelection::cartTypes()
+            as $code => $label
+        ) {
+            $this->cart_assignments[
+                $code
+            ] = [];
+        }
+
+        foreach (
+            $booking->items
+            as $item
+        ) {
             $this->cart_quantities[
                 $item->cart_type
             ] = $item->quantity;
+
+            $this->cart_assignments[
+                $item->cart_type
+            ] = $item
+                ->assignments
+                ->pluck('cart_id')
+                ->map(
+                    fn ($id): string =>
+                        (string) $id
+                )
+                ->values()
+                ->all();
         }
 
-        $cartTypes = $booking->items
+        $cartTypes = $booking
+            ->items
             ->pluck('cart_type')
             ->values()
             ->all();
@@ -94,19 +134,70 @@ class EditBooking extends Component
 
     public function save()
     {
-        $validated = $this->validate($this->rules());
+        $validated = $this->validate(
+            $this->rules()
+        );
 
-        $itemQuantities =
+        $itemQuantities = collect(
             BookingCartSelection::itemQuantities(
                 $validated['cart_selection'],
                 $validated['cart_quantities']
+            )
+        )
+            ->map(
+                fn ($quantity): int =>
+                    (int) $quantity
+            )
+            ->sortKeys()
+            ->all();
+
+        $selectedTypes =
+            array_keys(
+                $itemQuantities
             );
+
+        $requestedStatus =
+            $validated['status'];
+
+        $preservesAssignmentHistory =
+            in_array(
+                $requestedStatus,
+                [
+                    'completed',
+                    'cancelled',
+                ],
+                true
+            )
+            && $this->booking
+                ->items()
+                ->whereHas('assignments')
+                ->exists();
+
+        if (
+            $preservesAssignmentHistory
+            && $itemQuantities
+                !== $this->currentItemQuantities()
+        ) {
+            $this->addError(
+                'cart_selection',
+                'Cart selection and quantities cannot be changed when completing or cancelling a booking with fleet assignment history.'
+            );
+
+            return;
+        }
+
+        $assignmentData = Arr::only(
+            $validated['cart_assignments'] ?? [],
+            $selectedTypes
+        );
 
         $bookingData = Arr::except(
             $validated,
             [
                 'cart_selection',
                 'cart_quantities',
+                'cart_assignments',
+                'status',
             ]
         );
 
@@ -130,12 +221,14 @@ class EditBooking extends Component
 
         DB::transaction(function () use (
             $bookingData,
-            $itemQuantities
+            $itemQuantities,
+            $selectedTypes,
+            $requestedStatus,
+            $assignmentData
         ): void {
-            $this->booking->update($bookingData);
-
-            $selectedTypes =
-                array_keys($itemQuantities);
+            $this->booking->update(
+                $bookingData
+            );
 
             $this->booking
                 ->items()
@@ -153,18 +246,41 @@ class EditBooking extends Component
                     ->items()
                     ->updateOrCreate(
                         [
-                            'cart_type' => $cartType,
+                            'cart_type' =>
+                                $cartType,
                         ],
                         [
-                            'quantity' => $quantity,
+                            'quantity' =>
+                                $quantity,
                         ]
                     );
             }
+
+            if (
+                $requestedStatus
+                === 'confirmed'
+            ) {
+                app(
+                    BookingCartAssignmentService::class
+                )->confirm(
+                    $this->booking->fresh(),
+                    $assignmentData
+                );
+
+                return;
+            }
+
+            $this->booking->update([
+                'status' =>
+                    $requestedStatus,
+            ]);
         });
 
         session()->flash(
             'success',
-            'Booking updated successfully.'
+            $requestedStatus === 'confirmed'
+                ? 'Booking confirmed and fleet assigned successfully.'
+                : 'Booking updated successfully.'
         );
 
         return $this->redirectRoute(
@@ -184,6 +300,24 @@ class EditBooking extends Component
         return $this->redirectRoute(
             'admin.bookings.index'
         );
+    }
+
+    protected function currentItemQuantities(): array
+    {
+        return $this->booking
+            ->items()
+            ->get([
+                'cart_type',
+                'quantity',
+            ])
+            ->mapWithKeys(
+                fn ($item): array => [
+                    $item->cart_type =>
+                        (int) $item->quantity,
+                ]
+            )
+            ->sortKeys()
+            ->all();
     }
 
     protected function rules(): array
@@ -251,6 +385,10 @@ class EditBooking extends Component
                     'array',
                 ],
 
+                'cart_assignments' => [
+                    'array',
+                ],
+
                 'special_notes' => [
                     'nullable',
                     'string',
@@ -284,6 +422,48 @@ class EditBooking extends Component
         );
     }
 
+    protected function availableCartsByType(): array
+    {
+        if (
+            $this->status !== 'confirmed'
+            || $this->pickup_at === ''
+            || $this->return_at === ''
+        ) {
+            return [];
+        }
+
+        try {
+            $itemQuantities =
+                BookingCartSelection::itemQuantities(
+                    $this->cart_selection,
+                    $this->cart_quantities
+                );
+
+            $availability = app(
+                FleetAvailabilityService::class
+            );
+
+            $available = [];
+
+            foreach (
+                array_keys($itemQuantities)
+                as $cartType
+            ) {
+                $available[$cartType] =
+                    $availability->availableCarts(
+                        $cartType,
+                        $this->pickup_at,
+                        $this->return_at,
+                        $this->booking->id
+                    );
+            }
+
+            return $available;
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
     public function render()
     {
         return view(
@@ -304,6 +484,12 @@ class EditBooking extends Component
                     'grabone.booking_statuses',
                     []
                 ),
+
+                'showCartAssignments' =>
+                    true,
+
+                'availableCartsByType' =>
+                    $this->availableCartsByType(),
             ]
         );
     }

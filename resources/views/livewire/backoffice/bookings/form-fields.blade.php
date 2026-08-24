@@ -106,14 +106,13 @@
         @if ($cart_selection === 'mix' || $cart_selection === $code)
             <div wire:key="cart-quantity-{{ $code }}">
                 <label class="mb-2 block text-sm font-semibold text-gray-700">
-                    Quantity — {{ $label }}
+                    Quantity - {{ $label }}
                 </label>
 
                 <input
                     type="number"
                     min="1"
-                    max="20"
-                    wire:model="cart_quantities.{{ $code }}"
+                    wire:model.live="cart_quantities.{{ $code }}"
                     class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
                 >
 
@@ -131,7 +130,7 @@
 
         <input
             type="datetime-local"
-            wire:model="pickup_at"
+            wire:model.live="pickup_at"
             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
         >
 
@@ -151,7 +150,7 @@
 
         <input
             type="datetime-local"
-            wire:model="return_at"
+            wire:model.live="return_at"
             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
         >
 
@@ -186,7 +185,7 @@
         </label>
 
         <select
-            wire:model="status"
+            wire:model.live="status"
             class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
         >
             @foreach ($statuses as $value => $label)
@@ -216,6 +215,91 @@
             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
         @enderror
     </div>
+
+    @if (($showCartAssignments ?? false) && $status === 'confirmed')
+        <div class="lg:col-span-2 rounded-2xl border border-blue-200 bg-blue-50/50 p-5">
+            <div class="mb-5">
+                <h2 class="text-lg font-bold text-gray-900">
+                    Assign Actual Fleet
+                </h2>
+
+                <p class="mt-1 text-sm text-gray-600">
+                    Confirmation requires the exact number of active carts available for this Belize date and time.
+                </p>
+
+                <p class="mt-1 text-xs text-gray-500">
+                    The {{ config('grabone.booking_buffer_minutes', 60) }} minute operational buffer is included automatically.
+                </p>
+            </div>
+
+            <div class="grid gap-5 lg:grid-cols-2">
+                @foreach ($cartTypes as $code => $label)
+                    @if ($cart_selection === 'mix' || $cart_selection === $code)
+                        @php
+                            $requiredQuantity = max(
+                                1,
+                                (int) ($cart_quantities[$code] ?? 1)
+                            );
+
+                            $availableForType =
+                                $availableCartsByType[$code] ?? collect();
+                        @endphp
+
+                        <div
+                            wire:key="cart-assignment-{{ $code }}"
+                            class="rounded-xl border border-gray-200 bg-white p-4"
+                        >
+                            <div class="mb-3">
+                                <div class="font-semibold text-gray-900">
+                                    {{ $label }}
+                                </div>
+
+                                <div class="text-xs text-gray-500">
+                                    Select exactly {{ $requiredQuantity }}
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                @forelse ($availableForType as $cart)
+                                    <label
+                                        wire:key="available-cart-{{ $code }}-{{ $cart->id }}"
+                                        class="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 px-3 py-3 hover:bg-gray-50"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            value="{{ $cart->id }}"
+                                            wire:model="cart_assignments.{{ $code }}"
+                                            class="h-4 w-4 rounded border-gray-300 text-secondary focus:ring-secondary"
+                                        >
+
+                                        <span class="font-semibold text-gray-900">
+                                            {{ $cart->code }}
+                                        </span>
+                                    </label>
+                                @empty
+                                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
+                                        No active carts are available for this Belize time window.
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            @error("cart_assignments.$code")
+                                <p class="mt-3 text-sm font-medium text-red-600">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+
+            @error('cart_assignments')
+                <p class="mt-4 text-sm font-medium text-red-600">
+                    {{ $message }}
+                </p>
+            @enderror
+        </div>
+    @endif
 
     <div class="lg:col-span-2">
         <label class="mb-2 block text-sm font-semibold text-gray-700">

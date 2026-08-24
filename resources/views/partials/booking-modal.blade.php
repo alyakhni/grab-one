@@ -177,7 +177,6 @@
                                 type="number"
                                 name="cart_quantities[{{ $code }}]"
                                 min="1"
-                                max="20"
                                 value="{{ $defaultQuantity }}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-primary"
                             >
