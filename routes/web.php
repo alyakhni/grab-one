@@ -6,6 +6,9 @@ use App\Http\Controllers\ContactController;
 use App\Livewire\Backoffice\Bookings\CreateBooking;
 use App\Livewire\Backoffice\Bookings\EditBooking;
 use App\Livewire\Backoffice\Bookings\Index as BookingsIndex;
+use App\Livewire\Backoffice\Carts\CreateCart;
+use App\Livewire\Backoffice\Carts\EditCart;
+use App\Livewire\Backoffice\Carts\Index as CartsIndex;
 use App\Livewire\Backoffice\Contacts\CreateContact;
 use App\Livewire\Backoffice\Contacts\EditContact;
 use App\Livewire\Backoffice\Contacts\Index as ContactsIndex;
@@ -17,8 +20,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::post('/book-now', [BookingController::class, 'store'])->name('booking.store');
-Route::post('/contact-us', [ContactController::class, 'send'])->name('contact.send');
+Route::post('/book-now', [BookingController::class, 'store'])
+    ->name('booking.store');
+
+Route::post('/contact-us', [ContactController::class, 'send'])
+    ->name('contact.send');
 
 Route::livewire('/admin/login', Login::class)
     ->name('login');
@@ -38,6 +44,15 @@ Route::prefix('admin')
 
         Route::livewire('/bookings/{booking}/edit', EditBooking::class)
             ->name('bookings.edit');
+
+        Route::livewire('/carts', CartsIndex::class)
+            ->name('carts.index');
+
+        Route::livewire('/carts/create', CreateCart::class)
+            ->name('carts.create');
+
+        Route::livewire('/carts/{cart}/edit', EditCart::class)
+            ->name('carts.edit');
 
         Route::livewire('/contacts', ContactsIndex::class)
             ->name('contacts.index');

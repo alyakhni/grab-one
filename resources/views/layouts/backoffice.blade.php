@@ -50,6 +50,16 @@
             </a>
 
             <a
+                href="{{ route('admin.carts.index') }}"
+                class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
+                    {{ request()->routeIs('admin.carts.*')
+                        ? 'bg-secondary text-white'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-secondary' }}"
+            >
+                Fleet
+            </a>
+
+            <a
                 href="{{ route('admin.contacts.index') }}"
                 class="block whitespace-nowrap rounded-lg px-4 py-3 text-sm font-semibold
                     {{ request()->routeIs('admin.contacts.*')
