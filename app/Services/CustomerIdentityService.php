@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Contact;
 use App\Models\Customer;
 
 class CustomerIdentityService
@@ -118,27 +119,48 @@ class CustomerIdentityService
 
         if ($customer instanceof Customer) {
             $customer->update([
-                'name' => trim($name),
-                'email' => trim($email),
+                'name' =>
+                    trim($name),
+
+                'email' =>
+                    trim($email),
+
                 'email_normalized' =>
                     $emailNormalized,
-                'phone' => trim($phone),
+
+                'phone' =>
+                    trim($phone),
+
                 'phone_normalized' =>
                     $phoneNormalized,
             ]);
 
-            return $customer->fresh();
+            $customer =
+                $customer->fresh();
+        } else {
+            $customer = Customer::create([
+                'name' =>
+                    trim($name),
+
+                'email' =>
+                    trim($email),
+
+                'email_normalized' =>
+                    $emailNormalized,
+
+                'phone' =>
+                    trim($phone),
+
+                'phone_normalized' =>
+                    $phoneNormalized,
+            ]);
         }
 
-        return Customer::create([
-            'name' => trim($name),
-            'email' => trim($email),
-            'email_normalized' =>
-                $emailNormalized,
-            'phone' => trim($phone),
-            'phone_normalized' =>
-                $phoneNormalized,
-        ]);
+        $this->linkHistoricalContacts(
+            $customer
+        );
+
+        return $customer;
     }
 
     public function findExistingForContact(
@@ -179,6 +201,100 @@ class CustomerIdentityService
 
         return $match['conflict']
             || $match['ambiguous'];
+    }
+
+    protected function linkHistoricalContacts(
+        Customer $customer
+    ): void {
+        $emailNormalized =
+            $customer->email_normalized;
+
+        $phoneNormalized =
+            $customer->phone_normalized;
+
+        if (
+            $emailNormalized === null
+            && $phoneNormalized === null
+        ) {
+            return;
+        }
+
+        Contact::query()
+            ->whereNull(
+                'customer_id'
+            )
+            ->select([
+                'id',
+                'email',
+                'phone',
+            ])
+            ->chunkById(
+                100,
+                function (
+                    $contacts
+                ) use (
+                    $customer,
+                    $emailNormalized,
+                    $phoneNormalized
+                ): void {
+                    foreach (
+                        $contacts
+                        as $contact
+                    ) {
+                        $contactEmail =
+                            $this->normalizeEmail(
+                                $contact->email
+                            );
+
+                        $contactPhone =
+                            $this->normalizePhone(
+                                $contact->phone
+                            );
+
+                        $matchesCustomer =
+                            (
+                                $emailNormalized !== null
+                                && $contactEmail
+                                    === $emailNormalized
+                            )
+                            || (
+                                $phoneNormalized !== null
+                                && $contactPhone
+                                    === $phoneNormalized
+                            );
+
+                        if (! $matchesCustomer) {
+                            continue;
+                        }
+
+                        $resolvedCustomer =
+                            $this->findExistingForContact(
+                                $contact->email,
+                                $contact->phone
+                            );
+
+                        if (
+                            ! $resolvedCustomer
+                            || $resolvedCustomer->id
+                                !== $customer->id
+                        ) {
+                            continue;
+                        }
+
+                        Contact::query()
+                            ->whereKey(
+                                $contact->id
+                            )
+                            ->whereNull(
+                                'customer_id'
+                            )
+                            ->update([
+                                'customer_id' =>
+                                    $customer->id,
+                            ]);
+                    }
+                }
+            );
     }
 
     protected function match(

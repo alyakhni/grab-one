@@ -3,6 +3,7 @@
 namespace App\Livewire\Backoffice\Bookings;
 
 use App\Models\Booking;
+use App\Services\CustomerIdentityService;
 use App\Support\BookingCartSelection;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -453,12 +454,40 @@ class Index extends Component
 
     public function render()
     {
+        $bookings =
+            $this->bookingsQuery()
+                ->paginate(10);
+
+        $identityService = app(
+            CustomerIdentityService::class
+        );
+
+        $identityReviewIds =
+            $bookings
+                ->getCollection()
+                ->filter(
+                    fn (
+                        Booking $booking
+                    ): bool =>
+                        $booking->customer_id === null
+                        && $identityService->hasConflict(
+                            $booking->email,
+                            $booking->phone
+                        )
+                )
+                ->pluck('id')
+                ->map(
+                    fn ($id): int =>
+                        (int) $id
+                )
+                ->values()
+                ->all();
+
         return view(
             'livewire.backoffice.bookings.index',
             [
                 'bookings' =>
-                    $this->bookingsQuery()
-                        ->paginate(10),
+                    $bookings,
 
                 'statuses' => config(
                     'grabone.booking_statuses',
@@ -475,6 +504,9 @@ class Index extends Component
 
                 'activeFilterCount' =>
                     $this->activeFilterCount(),
+
+                'identityReviewIds' =>
+                    $identityReviewIds,
             ]
         );
     }

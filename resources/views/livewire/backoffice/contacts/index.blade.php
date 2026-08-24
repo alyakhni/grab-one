@@ -184,6 +184,17 @@
                                 <div class="mt-1 text-xs text-gray-500">
                                     {{ $contact->email }}
                                 </div>
+
+                                @if (in_array($contact->id, $identityReviewIds, true))
+                                    <div class="mt-2">
+                                        <span
+                                            title="Email and phone point to conflicting or ambiguous customer records."
+                                            class="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700"
+                                        >
+                                            Identity Review
+                                        </span>
+                                    </div>
+                                @endif
                             </td>
 
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-700">

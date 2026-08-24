@@ -3,6 +3,7 @@
 namespace App\Livewire\Backoffice\Contacts;
 
 use App\Models\Contact;
+use App\Services\CustomerIdentityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -307,17 +308,51 @@ class Index extends Component
 
     public function render()
     {
+        $contacts =
+            $this->contactsQuery()
+                ->paginate(10);
+
+        $identityService = app(
+            CustomerIdentityService::class
+        );
+
+        $identityReviewIds =
+            $contacts
+                ->getCollection()
+                ->filter(
+                    fn (
+                        Contact $contact
+                    ): bool =>
+                        $contact->customer_id === null
+                        && $identityService->hasConflict(
+                            $contact->email,
+                            $contact->phone
+                        )
+                )
+                ->pluck('id')
+                ->map(
+                    fn ($id): int =>
+                        (int) $id
+                )
+                ->values()
+                ->all();
+
         return view(
             'livewire.backoffice.contacts.index',
             [
                 'contacts' =>
-                    $this->contactsQuery()->paginate(10),
+                    $contacts,
+
                 'statuses' => config(
                     'grabone.contact_statuses',
                     []
                 ),
+
                 'activeFilterCount' =>
                     $this->activeFilterCount(),
+
+                'identityReviewIds' =>
+                    $identityReviewIds,
             ]
         );
     }
