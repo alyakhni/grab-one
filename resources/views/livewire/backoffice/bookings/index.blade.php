@@ -7,6 +7,7 @@
 
             <p class="mt-2 text-gray-500">
                 Manage Grab One booking requests.
+                All rental times are shown in Belize time.
             </p>
         </div>
 
@@ -35,7 +36,7 @@
                 <input
                     type="search"
                     wire:model.live.debounce.300ms="search"
-                    placeholder="Name, phone, email, hotel..."
+                    placeholder="Name, phone, email, hotel, cart..."
                     class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
                 >
             </div>
@@ -88,17 +89,17 @@
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Cart
+                            Carts
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <button wire:click="sortBy('pickup_date')" class="cursor-pointer">
+                            <button wire:click="sortBy('pickup_at')" class="cursor-pointer">
                                 Pick Up
                             </button>
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <button wire:click="sortBy('return_date')" class="cursor-pointer">
+                            <button wire:click="sortBy('return_at')" class="cursor-pointer">
                                 Return
                             </button>
                         </th>
@@ -148,25 +149,34 @@
                                 {{ $booking->phone }}
                             </td>
 
-                            <td class="whitespace-nowrap px-4 py-4">
-                                <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-                                    {{ $booking->cart_type }}
-                                </span>
-                            </td>
-
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
-                                {{ $booking->pickup_date->format('M d, Y') }}
-
-                                <div class="text-xs text-gray-400">
-                                    {{ $booking->pickup_date->format('h:i A') }}
+                            <td class="px-4 py-4">
+                                <div class="flex flex-col gap-1">
+                                    @forelse ($booking->items as $item)
+                                        <span class="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                                            {{ $cartTypes[$item->cart_type] ?? $item->cart_type }}
+                                            × {{ $item->quantity }}
+                                        </span>
+                                    @empty
+                                        <span class="text-xs text-gray-400">
+                                            No cart items
+                                        </span>
+                                    @endforelse
                                 </div>
                             </td>
 
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
-                                {{ $booking->return_date->format('M d, Y') }}
+                                {{ $booking->pickup_at->format('M d, Y') }}
 
                                 <div class="text-xs text-gray-400">
-                                    {{ $booking->return_date->format('h:i A') }}
+                                    {{ $booking->pickup_at->format('h:i A') }}
+                                </div>
+                            </td>
+
+                            <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
+                                {{ $booking->return_at->format('M d, Y') }}
+
+                                <div class="text-xs text-gray-400">
+                                    {{ $booking->return_at->format('h:i A') }}
                                 </div>
                             </td>
 

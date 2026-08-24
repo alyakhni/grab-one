@@ -85,22 +85,44 @@
 
     <div>
         <label class="mb-2 block text-sm font-semibold text-gray-700">
-            Cart Type
+            Cart Selection
         </label>
 
         <select
-            wire:model="cart_type"
+            wire:model.live="cart_selection"
             class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
         >
-            @foreach ($cartTypes as $value => $label)
+            @foreach ($selectionOptions as $value => $label)
                 <option value="{{ $value }}">{{ $label }}</option>
             @endforeach
         </select>
 
-        @error('cart_type')
+        @error('cart_selection')
             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
         @enderror
     </div>
+
+    @foreach ($cartTypes as $code => $label)
+        @if ($cart_selection === 'mix' || $cart_selection === $code)
+            <div wire:key="cart-quantity-{{ $code }}">
+                <label class="mb-2 block text-sm font-semibold text-gray-700">
+                    Quantity — {{ $label }}
+                </label>
+
+                <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    wire:model="cart_quantities.{{ $code }}"
+                    class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                >
+
+                @error("cart_quantities.$code")
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+        @endif
+    @endforeach
 
     <div>
         <label class="mb-2 block text-sm font-semibold text-gray-700">
@@ -109,11 +131,15 @@
 
         <input
             type="datetime-local"
-            wire:model="pickup_date"
+            wire:model="pickup_at"
             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
         >
 
-        @error('pickup_date')
+        <p class="mt-1 text-xs text-gray-500">
+            Belize time (America/Belize)
+        </p>
+
+        @error('pickup_at')
             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
         @enderror
     </div>
@@ -125,11 +151,15 @@
 
         <input
             type="datetime-local"
-            wire:model="return_date"
+            wire:model="return_at"
             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
         >
 
-        @error('return_date')
+        <p class="mt-1 text-xs text-gray-500">
+            Belize time (America/Belize)
+        </p>
+
+        @error('return_at')
             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
         @enderror
     </div>
@@ -165,23 +195,6 @@
         </select>
 
         @error('status')
-            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <label class="mb-2 block text-sm font-semibold text-gray-700">
-            Total Days
-        </label>
-
-        <input
-            type="number"
-            min="1"
-            wire:model="total_days"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-        >
-
-        @error('total_days')
             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
         @enderror
     </div>

@@ -67,7 +67,7 @@ class EditContact extends Component
             'message' => ['required', 'string'],
             'status' => [
                 'required',
-                Rule::in(array_keys(Contact::STATUSES)),
+                Rule::in(array_keys(config('grabone.contact_statuses', []))),
             ],
             'is_read' => ['boolean'],
         ];
@@ -76,7 +76,7 @@ class EditContact extends Component
     public function render()
     {
         return view('livewire.backoffice.contacts.edit', [
-            'statuses' => Contact::STATUSES,
+            'statuses' => config('grabone.contact_statuses', []),
         ]);
     }
 }

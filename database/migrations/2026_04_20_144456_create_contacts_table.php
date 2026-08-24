@@ -6,25 +6,34 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('contacts', function (Blueprint $table) {
             $table->id();
+
+            /*
+             * A contact message may match an existing customer.
+             * A contact message by itself does not automatically create one.
+             */
+            $table->foreignId('customer_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->string('name');
             $table->string('email');
-            $table->string('phone'); // تمت إضافته ليتطابق مع الفورم
+            $table->string('phone', 50);
             $table->text('message');
-            $table->boolean('is_read')->default(false); // ليستخدمه الآدمن في لوحة التحكم
+
+            $table->string('status')->default('pending');
+            $table->boolean('is_read')->default(false);
+
             $table->timestamps();
+
+            $table->index(['status', 'is_read']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('contacts');

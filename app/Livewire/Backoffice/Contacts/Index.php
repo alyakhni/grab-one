@@ -148,7 +148,7 @@ class Index extends Component
     {
         return view('livewire.backoffice.contacts.index', [
             'contacts' => $this->contactsQuery()->paginate(10),
-            'statuses' => Contact::STATUSES,
+            'statuses' => config('grabone.contact_statuses', []),
         ]);
     }
 }

@@ -3,42 +3,107 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Support\BookingCartSelection;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class BookingController extends Controller
 {
     public function store(Request $request)
     {
-        // 1. التحقق من البيانات المرسلة
-        $validated = $request->validate([
-            'full_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:50',
-            'hotel_name' => 'nullable|string|max:255',
-            'pickup_location' => 'required|string|max:255',
-            'pickup_date' => 'required|date',
-            'return_date' => 'required|date|after:pickup_date',
-            'cart_type' => 'required|string',
-            'special_notes' => 'nullable|string',
-        ]);
+        $rules = [
+            'full_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
+            'hotel_name' => ['nullable', 'string', 'max:255'],
 
-        // 2. حساب إجمالي عدد الأيام (Total Days)
-        $pickupDate = Carbon::parse($validated['pickup_date']);
-        $returnDate = Carbon::parse($validated['return_date']);
-        $totalDays = $pickupDate->diffInDays($returnDate);
-        
-        // التأكد من أن الحد الأدنى هو يوم واحد
-        $validated['total_days'] = $totalDays > 0 ? $totalDays : 1;
-        
-        // 3. إعطاء قيم افتراضية للحقول الباقية
-        $validated['status'] = 'pending';
-        $validated['total_price'] = 0.00; // الإدمن سيقوم بتحديث السعر من لوحة الإدارة
+            'pickup_location' => [
+                'required',
+                Rule::in(
+                    array_keys(
+                        config('grabone.pickup_locations', [])
+                    )
+                ),
+            ],
 
-        // 4. الحفظ في قاعدة البيانات
-        Booking::create($validated);
+            'pickup_at' => ['required', 'date'],
 
-        // 5. العودة للموقع مع رسالة نجاح
-        return redirect()->back()->with('success', 'Your booking request has been submitted! We will contact you shortly to confirm pricing and details.');
+            'return_at' => [
+                'required',
+                'date',
+                'after:pickup_at',
+            ],
+
+            'cart_selection' => [
+                'required',
+                Rule::in(
+                    array_keys(
+                        BookingCartSelection::selectionOptions()
+                    )
+                ),
+            ],
+
+            'cart_quantities' => ['required', 'array'],
+
+            'special_notes' => ['nullable', 'string'],
+        ];
+
+        $rules = array_merge(
+            $rules,
+            BookingCartSelection::quantityRules()
+        );
+
+        $validated = $request->validate($rules);
+
+        $itemQuantities = BookingCartSelection::itemQuantities(
+            $validated['cart_selection'],
+            $validated['cart_quantities']
+        );
+
+        $bookingData = Arr::except(
+            $validated,
+            [
+                'cart_selection',
+                'cart_quantities',
+            ]
+        );
+
+        $bookingData['hotel_name'] = blank(
+            $bookingData['hotel_name'] ?? null
+        )
+            ? null
+            : $bookingData['hotel_name'];
+
+        $bookingData['special_notes'] = blank(
+            $bookingData['special_notes'] ?? null
+        )
+            ? null
+            : $bookingData['special_notes'];
+
+        $bookingData['status'] = 'pending';
+        $bookingData['total_price'] = 0.00;
+
+        DB::transaction(function () use (
+            $bookingData,
+            $itemQuantities
+        ): void {
+            $booking = Booking::create($bookingData);
+
+            foreach ($itemQuantities as $cartType => $quantity) {
+                $booking->items()->create([
+                    'cart_type' => $cartType,
+                    'quantity' => $quantity,
+                ]);
+            }
+        });
+
+        return redirect()
+            ->back()
+            ->with(
+                'success',
+                'Your booking request has been submitted! We will contact you shortly to confirm availability, pricing, and details.'
+            );
     }
 }

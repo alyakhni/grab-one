@@ -3,7 +3,9 @@
 namespace App\Livewire\Backoffice\Bookings;
 
 use App\Models\Booking;
+use App\Support\BookingCartSelection;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -27,11 +29,10 @@ class Index extends Component
 
     protected array $sortableFields = [
         'full_name',
-        'pickup_date',
-        'return_date',
+        'pickup_at',
+        'return_at',
         'total_price',
         'status',
-        'total_days',
         'created_at',
         'updated_at',
     ];
@@ -48,14 +49,19 @@ class Index extends Component
 
     public function sortBy(string $field): void
     {
-        if (! in_array($field, $this->sortableFields, true)) {
+        if (! in_array(
+            $field,
+            $this->sortableFields,
+            true
+        )) {
             return;
         }
 
         if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc'
-                ? 'desc'
-                : 'asc';
+            $this->sortDirection =
+                $this->sortDirection === 'asc'
+                    ? 'desc'
+                    : 'asc';
         } else {
             $this->sortField = $field;
             $this->sortDirection = 'asc';
@@ -66,22 +72,30 @@ class Index extends Component
 
     public function delete(int $bookingId): void
     {
-        Booking::query()->findOrFail($bookingId)->delete();
+        Booking::query()
+            ->findOrFail($bookingId)
+            ->delete();
 
         $this->selected = array_values(
             array_filter(
                 $this->selected,
-                fn ($id): bool => (int) $id !== $bookingId
+                fn ($id): bool =>
+                    (int) $id !== $bookingId
             )
         );
 
-        session()->flash('success', 'Booking deleted successfully.');
+        session()->flash(
+            'success',
+            'Booking deleted successfully.'
+        );
     }
 
     public function deleteSelected(): void
     {
         $ids = collect($this->selected)
-            ->map(fn ($id): int => (int) $id)
+            ->map(
+                fn ($id): int => (int) $id
+            )
             ->filter()
             ->unique()
             ->values()
@@ -97,39 +111,146 @@ class Index extends Component
 
         $this->selected = [];
 
-        session()->flash('success', 'Selected bookings deleted successfully.');
+        session()->flash(
+            'success',
+            'Selected bookings deleted successfully.'
+        );
     }
 
     protected function bookingsQuery(): Builder
     {
         $search = trim($this->search);
 
+        $needle = Str::lower($search);
+
+        $matchingCartTypes = collect(
+            BookingCartSelection::cartTypes()
+        )
+            ->filter(
+                fn (
+                    string $label,
+                    string $code
+                ): bool =>
+                    Str::contains(
+                        Str::lower($label),
+                        $needle
+                    )
+                    || Str::contains(
+                        Str::lower($code),
+                        $needle
+                    )
+            )
+            ->keys()
+            ->all();
+
         return Booking::query()
-            ->when($search !== '', function (Builder $query) use ($search): void {
-                $query->where(function (Builder $query) use ($search): void {
-                    $query
-                        ->where('full_name', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%")
-                        ->orWhere('cart_type', 'like', "%{$search}%")
-                        ->orWhere('status', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('hotel_name', 'like', "%{$search}%")
-                        ->orWhere('pickup_location', 'like', "%{$search}%")
-                        ->orWhere('flight_number', 'like', "%{$search}%");
-                });
-            })
+            ->with('items')
+
+            ->when(
+                $search !== '',
+                function (
+                    Builder $query
+                ) use (
+                    $search,
+                    $matchingCartTypes
+                ): void {
+                    $query->where(
+                        function (
+                            Builder $query
+                        ) use (
+                            $search,
+                            $matchingCartTypes
+                        ): void {
+                            $query
+                                ->where(
+                                    'full_name',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'phone',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'status',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'email',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'hotel_name',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'pickup_location',
+                                    'like',
+                                    "%{$search}%"
+                                )
+                                ->orWhere(
+                                    'flight_number',
+                                    'like',
+                                    "%{$search}%"
+                                );
+
+                            if (
+                                $matchingCartTypes !== []
+                            ) {
+                                $query->orWhereHas(
+                                    'items',
+                                    fn (
+                                        Builder $itemQuery
+                                    ): Builder =>
+                                        $itemQuery->whereIn(
+                                            'cart_type',
+                                            $matchingCartTypes
+                                        )
+                                );
+                            }
+                        }
+                    );
+                }
+            )
+
             ->when(
                 $this->status !== '',
-                fn (Builder $query): Builder => $query->where('status', $this->status)
+                fn (
+                    Builder $query
+                ): Builder =>
+                    $query->where(
+                        'status',
+                        $this->status
+                    )
             )
-            ->orderBy($this->sortField, $this->sortDirection);
+
+            ->orderBy(
+                $this->sortField,
+                $this->sortDirection
+            );
     }
 
     public function render()
     {
-        return view('livewire.backoffice.bookings.index', [
-            'bookings' => $this->bookingsQuery()->paginate(10),
-            'statuses' => Booking::STATUSES,
-        ]);
+        return view(
+            'livewire.backoffice.bookings.index',
+            [
+                'bookings' =>
+                    $this->bookingsQuery()
+                        ->paginate(10),
+
+                'statuses' => config(
+                    'grabone.booking_statuses',
+                    []
+                ),
+
+                'cartTypes' =>
+                    BookingCartSelection::cartTypes(),
+            ]
+        );
     }
 }
