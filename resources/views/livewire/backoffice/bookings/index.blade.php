@@ -27,8 +27,8 @@
 
     <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
 
-        <div class="grid gap-4 border-b border-gray-200 p-5 lg:grid-cols-[1fr_240px_auto]">
-            <div>
+        <div class="flex flex-col gap-4 border-b border-gray-200 p-5 lg:flex-row lg:items-end">
+            <div class="min-w-0 flex-1">
                 <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Search
                 </label>
@@ -41,30 +41,37 @@
                 >
             </div>
 
-            <div>
-                <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
-                    Status
-                </label>
-
-                <select
-                    wire:model.live="status"
-                    class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+            <div class="flex flex-wrap items-center gap-3">
+                <button
+                    type="button"
+                    wire:click="openFilters"
+                    class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                 >
-                    <option value="">All statuses</option>
+                    Filters
 
-                    @foreach ($statuses as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
+                    @if ($activeFilterCount > 0)
+                        <span class="inline-flex min-w-6 items-center justify-center rounded-full bg-gray-900 px-2 py-0.5 text-xs font-bold text-white">
+                            {{ $activeFilterCount }}
+                        </span>
+                    @endif
+                </button>
 
-            <div class="flex items-end">
+                @if ($activeFilterCount > 0)
+                    <button
+                        type="button"
+                        wire:click="clearFilters"
+                        class="cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                    >
+                        Clear Filters
+                    </button>
+                @endif
+
                 @if (count($selected) > 0)
                     <button
                         type="button"
                         wire:click="deleteSelected"
                         wire:confirm="Delete all selected bookings?"
-                        class="w-full cursor-pointer rounded-lg border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
+                        class="cursor-pointer rounded-lg border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
                     >
                         Delete Selected ({{ count($selected) }})
                     </button>
@@ -79,13 +86,25 @@
                         <th class="w-12 px-4 py-3"></th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <button wire:click="sortBy('full_name')" class="cursor-pointer">
+                            <button type="button" wire:click="sortBy('full_name')" class="inline-flex cursor-pointer items-center gap-1 hover:text-gray-900">
                                 Customer
+                                @if ($sortField === 'full_name')
+                                    <span aria-hidden="true">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                @else
+                                    <span class="text-gray-300" aria-hidden="true">↕</span>
+                                @endif
                             </button>
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Phone
+                            <button type="button" wire:click="sortBy('phone')" class="inline-flex cursor-pointer items-center gap-1 hover:text-gray-900">
+                                Phone
+                                @if ($sortField === 'phone')
+                                    <span aria-hidden="true">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                @else
+                                    <span class="text-gray-300" aria-hidden="true">↕</span>
+                                @endif
+                            </button>
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -93,26 +112,46 @@
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <button wire:click="sortBy('pickup_at')" class="cursor-pointer">
+                            <button type="button" wire:click="sortBy('pickup_at')" class="inline-flex cursor-pointer items-center gap-1 hover:text-gray-900">
                                 Pick Up
+                                @if ($sortField === 'pickup_at')
+                                    <span aria-hidden="true">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                @else
+                                    <span class="text-gray-300" aria-hidden="true">↕</span>
+                                @endif
                             </button>
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <button wire:click="sortBy('return_at')" class="cursor-pointer">
+                            <button type="button" wire:click="sortBy('return_at')" class="inline-flex cursor-pointer items-center gap-1 hover:text-gray-900">
                                 Return
+                                @if ($sortField === 'return_at')
+                                    <span aria-hidden="true">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                @else
+                                    <span class="text-gray-300" aria-hidden="true">↕</span>
+                                @endif
                             </button>
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <button wire:click="sortBy('total_price')" class="cursor-pointer">
+                            <button type="button" wire:click="sortBy('total_price')" class="inline-flex cursor-pointer items-center gap-1 hover:text-gray-900">
                                 Price
+                                @if ($sortField === 'total_price')
+                                    <span aria-hidden="true">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                @else
+                                    <span class="text-gray-300" aria-hidden="true">↕</span>
+                                @endif
                             </button>
                         </th>
 
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <button wire:click="sortBy('status')" class="cursor-pointer">
+                            <button type="button" wire:click="sortBy('status')" class="inline-flex cursor-pointer items-center gap-1 hover:text-gray-900">
                                 Status
+                                @if ($sortField === 'status')
+                                    <span aria-hidden="true">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                                @else
+                                    <span class="text-gray-300" aria-hidden="true">↕</span>
+                                @endif
                             </button>
                         </th>
 
@@ -125,7 +164,6 @@
                 <tbody class="divide-y divide-gray-100 bg-white">
                     @forelse ($bookings as $booking)
                         <tr wire:key="booking-{{ $booking->id }}" class="hover:bg-gray-50">
-
                             <td class="px-4 py-4">
                                 <input
                                     type="checkbox"
@@ -136,13 +174,8 @@
                             </td>
 
                             <td class="px-4 py-4">
-                                <div class="font-semibold text-gray-900">
-                                    {{ $booking->full_name }}
-                                </div>
-
-                                <div class="mt-1 text-xs text-gray-500">
-                                    {{ $booking->email }}
-                                </div>
+                                <div class="font-semibold text-gray-900">{{ $booking->full_name }}</div>
+                                <div class="mt-1 text-xs text-gray-500">{{ $booking->email }}</div>
                             </td>
 
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
@@ -157,27 +190,19 @@
                                             × {{ $item->quantity }}
                                         </span>
                                     @empty
-                                        <span class="text-xs text-gray-400">
-                                            No cart items
-                                        </span>
+                                        <span class="text-xs text-gray-400">No cart items</span>
                                     @endforelse
                                 </div>
                             </td>
 
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
                                 {{ $booking->pickup_at->format('M d, Y') }}
-
-                                <div class="text-xs text-gray-400">
-                                    {{ $booking->pickup_at->format('h:i A') }}
-                                </div>
+                                <div class="text-xs text-gray-400">{{ $booking->pickup_at->format('h:i A') }}</div>
                             </td>
 
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-700">
                                 {{ $booking->return_at->format('M d, Y') }}
-
-                                <div class="text-xs text-gray-400">
-                                    {{ $booking->return_at->format('h:i A') }}
-                                </div>
+                                <div class="text-xs text-gray-400">{{ $booking->return_at->format('h:i A') }}</div>
                             </td>
 
                             <td class="whitespace-nowrap px-4 py-4 font-semibold text-gray-900">
@@ -219,7 +244,6 @@
                                     </button>
                                 </div>
                             </td>
-
                         </tr>
                     @empty
                         <tr>
@@ -235,6 +259,140 @@
         <div class="border-t border-gray-200 p-5">
             {{ $bookings->links() }}
         </div>
-
     </div>
+
+    @if ($filtersOpen)
+        <div
+            wire:click.self="closeFilters"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4"
+        >
+            <div class="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+                <div class="flex items-center justify-between border-b border-gray-200 px-6 py-5">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Filter Bookings</h2>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Date range includes every booking that overlaps the selected days.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        wire:click="closeFilters"
+                        class="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100"
+                    >
+                        Close
+                    </button>
+                </div>
+
+                <div class="grid gap-5 p-6 sm:grid-cols-2">
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-gray-700">Status</label>
+                        <select
+                            wire:model="draftStatus"
+                            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                        >
+                            <option value="">All statuses</option>
+                            @foreach ($statuses as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('draftStatus')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-gray-700">Cart Type</label>
+                        <select
+                            wire:model="draftCartType"
+                            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                        >
+                            <option value="">All cart types</option>
+                            @foreach ($cartTypes as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('draftCartType')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-gray-700">Pickup Location</label>
+                        <select
+                            wire:model="draftPickupLocation"
+                            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                        >
+                            <option value="">All pickup locations</option>
+                            @foreach ($pickupLocations as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('draftPickupLocation')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="hidden sm:block"></div>
+
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-gray-700">From Date</label>
+                        <input
+                            type="date"
+                            wire:model="draftDateFrom"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                        >
+                        <p class="mt-1 text-xs text-gray-500">Belize calendar date.</p>
+                        @error('draftDateFrom')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-gray-700">To Date</label>
+                        <input
+                            type="date"
+                            wire:model="draftDateTo"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                        >
+                        <p class="mt-1 text-xs text-gray-500">Belize calendar date.</p>
+                        @error('draftDateTo')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-5 sm:flex-row sm:justify-between">
+                    <button
+                        type="button"
+                        wire:click="clearFilters"
+                        class="cursor-pointer rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                    >
+                        Clear Filters
+                    </button>
+
+                    <div class="flex gap-3">
+                        <button
+                            type="button"
+                            wire:click="closeFilters"
+                            class="cursor-pointer rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            wire:click="applyFilters"
+                            wire:loading.attr="disabled"
+                            wire:target="applyFilters"
+                            class="cursor-pointer rounded-lg bg-secondary px-5 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                        >
+                            <span wire:loading.remove wire:target="applyFilters">Apply Filters</span>
+                            <span wire:loading wire:target="applyFilters">Applying...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

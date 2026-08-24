@@ -4,8 +4,10 @@ namespace App\Livewire\Backoffice\Bookings;
 
 use App\Models\Booking;
 use App\Support\BookingCartSelection;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -20,6 +22,18 @@ class Index extends Component
     public string $search = '';
 
     public string $status = '';
+    public string $cartType = '';
+    public string $pickupLocation = '';
+    public string $dateFrom = '';
+    public string $dateTo = '';
+
+    public string $draftStatus = '';
+    public string $draftCartType = '';
+    public string $draftPickupLocation = '';
+    public string $draftDateFrom = '';
+    public string $draftDateTo = '';
+
+    public bool $filtersOpen = false;
 
     public string $sortField = 'created_at';
 
@@ -29,6 +43,7 @@ class Index extends Component
 
     protected array $sortableFields = [
         'full_name',
+        'phone',
         'pickup_at',
         'return_at',
         'total_price',
@@ -42,8 +57,103 @@ class Index extends Component
         $this->resetPage();
     }
 
-    public function updatedStatus(): void
+    public function openFilters(): void
     {
+        $this->draftStatus = $this->status;
+        $this->draftCartType = $this->cartType;
+        $this->draftPickupLocation = $this->pickupLocation;
+        $this->draftDateFrom = $this->dateFrom;
+        $this->draftDateTo = $this->dateTo;
+
+        $this->resetValidation();
+
+        $this->filtersOpen = true;
+    }
+
+    public function closeFilters(): void
+    {
+        $this->filtersOpen = false;
+
+        $this->resetValidation();
+    }
+
+    public function applyFilters(): void
+    {
+        $this->validate([
+            'draftStatus' => [
+                'nullable',
+                Rule::in(
+                    array_keys(
+                        config(
+                            'grabone.booking_statuses',
+                            []
+                        )
+                    )
+                ),
+            ],
+
+            'draftCartType' => [
+                'nullable',
+                Rule::in(
+                    array_keys(
+                        BookingCartSelection::cartTypes()
+                    )
+                ),
+            ],
+
+            'draftPickupLocation' => [
+                'nullable',
+                Rule::in(
+                    array_keys(
+                        config(
+                            'grabone.pickup_locations',
+                            []
+                        )
+                    )
+                ),
+            ],
+
+            'draftDateFrom' => [
+                'nullable',
+                'date',
+            ],
+
+            'draftDateTo' => [
+                'nullable',
+                'date',
+                'after_or_equal:draftDateFrom',
+            ],
+        ]);
+
+        $this->status = $this->draftStatus;
+        $this->cartType = $this->draftCartType;
+        $this->pickupLocation = $this->draftPickupLocation;
+        $this->dateFrom = $this->draftDateFrom;
+        $this->dateTo = $this->draftDateTo;
+
+        $this->filtersOpen = false;
+
+        $this->resetPage();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->status = '';
+        $this->cartType = '';
+        $this->pickupLocation = '';
+        $this->dateFrom = '';
+        $this->dateTo = '';
+
+        $this->draftStatus = '';
+        $this->draftCartType = '';
+        $this->draftPickupLocation = '';
+        $this->draftDateFrom = '';
+        $this->draftDateTo = '';
+
+        $this->filtersOpen = false;
+
+        $this->resetValidation();
+
         $this->resetPage();
     }
 
@@ -117,6 +227,30 @@ class Index extends Component
         );
     }
 
+    protected function activeFilterCount(): int
+    {
+        $count = 0;
+
+        foreach ([
+            $this->status,
+            $this->cartType,
+            $this->pickupLocation,
+        ] as $value) {
+            if ($value !== '') {
+                $count++;
+            }
+        }
+
+        if (
+            $this->dateFrom !== ''
+            || $this->dateTo !== ''
+        ) {
+            $count++;
+        }
+
+        return $count;
+    }
+
     protected function bookingsQuery(): Builder
     {
         $search = trim($this->search);
@@ -142,6 +276,32 @@ class Index extends Component
             )
             ->keys()
             ->all();
+
+        $timezone = (string) config(
+            'grabone.timezone',
+            config(
+                'app.timezone',
+                'America/Belize'
+            )
+        );
+
+        $dateFrom = $this->dateFrom !== ''
+            ? CarbonImmutable::parse(
+                $this->dateFrom,
+                $timezone
+            )
+                ->startOfDay()
+                ->format('Y-m-d H:i:s')
+            : null;
+
+        $dateTo = $this->dateTo !== ''
+            ? CarbonImmutable::parse(
+                $this->dateTo,
+                $timezone
+            )
+                ->endOfDay()
+                ->format('Y-m-d H:i:s')
+            : null;
 
         return Booking::query()
             ->with('items')
@@ -228,9 +388,66 @@ class Index extends Component
                     )
             )
 
+            ->when(
+                $this->cartType !== '',
+                fn (
+                    Builder $query
+                ): Builder =>
+                    $query->whereHas(
+                        'items',
+                        fn (
+                            Builder $itemQuery
+                        ): Builder =>
+                            $itemQuery->where(
+                                'cart_type',
+                                $this->cartType
+                            )
+                    )
+            )
+
+            ->when(
+                $this->pickupLocation !== '',
+                fn (
+                    Builder $query
+                ): Builder =>
+                    $query->where(
+                        'pickup_location',
+                        $this->pickupLocation
+                    )
+            )
+
+            ->when(
+                $dateFrom !== null,
+                fn (
+                    Builder $query
+                ): Builder =>
+                    $query->where(
+                        'return_at',
+                        '>=',
+                        $dateFrom
+                    )
+            )
+
+            ->when(
+                $dateTo !== null,
+                fn (
+                    Builder $query
+                ): Builder =>
+                    $query->where(
+                        'pickup_at',
+                        '<=',
+                        $dateTo
+                    )
+            )
+
             ->orderBy(
                 $this->sortField,
                 $this->sortDirection
+            )
+
+            ->orderBy(
+                'id',
+                'desc'
             );
     }
 
@@ -250,6 +467,14 @@ class Index extends Component
 
                 'cartTypes' =>
                     BookingCartSelection::cartTypes(),
+
+                'pickupLocations' => config(
+                    'grabone.pickup_locations',
+                    []
+                ),
+
+                'activeFilterCount' =>
+                    $this->activeFilterCount(),
             ]
         );
     }

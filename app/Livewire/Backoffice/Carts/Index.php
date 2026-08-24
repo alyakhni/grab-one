@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Support\BookingCartSelection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -23,6 +24,12 @@ class Index extends Component
 
     public string $status = '';
 
+    public string $filterCartType = '';
+
+    public string $filterStatus = '';
+
+    public bool $showFilters = false;
+
     public string $sortField = 'code';
 
     public string $sortDirection = 'asc';
@@ -31,6 +38,7 @@ class Index extends Component
         'code',
         'cart_type',
         'operational_status',
+        'notes',
         'created_at',
         'updated_at',
     ];
@@ -50,9 +58,83 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function openFilters(): void
+    {
+        $this->resetValidation();
+
+        $this->filterCartType = $this->cartType;
+        $this->filterStatus = $this->status;
+        $this->showFilters = true;
+    }
+
+    public function closeFilters(): void
+    {
+        $this->resetValidation();
+        $this->showFilters = false;
+    }
+
+    public function applyFilters(): void
+    {
+        $this->validate([
+            'filterCartType' => [
+                'nullable',
+                Rule::in(
+                    array_keys(
+                        BookingCartSelection::cartTypes()
+                    )
+                ),
+            ],
+            'filterStatus' => [
+                'nullable',
+                Rule::in(
+                    array_keys(
+                        config(
+                            'grabone.cart_operational_statuses',
+                            []
+                        )
+                    )
+                ),
+            ],
+        ]);
+
+        $this->cartType = $this->filterCartType;
+        $this->status = $this->filterStatus;
+        $this->showFilters = false;
+        $this->resetPage();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->resetValidation();
+
+        $this->cartType = '';
+        $this->status = '';
+        $this->filterCartType = '';
+        $this->filterStatus = '';
+        $this->showFilters = false;
+
+        $this->resetPage();
+    }
+
+    public function activeFilterCount(): int
+    {
+        return collect([
+            $this->cartType,
+            $this->status,
+        ])
+            ->filter(
+                fn (string $value): bool => $value !== ''
+            )
+            ->count();
+    }
+
     public function sortBy(string $field): void
     {
-        if (! in_array($field, $this->sortableFields, true)) {
+        if (! in_array(
+            $field,
+            $this->sortableFields,
+            true
+        )) {
             return;
         }
 
@@ -168,29 +250,22 @@ class Index extends Component
                     );
                 }
             )
-
             ->when(
                 $this->cartType !== '',
-                fn (
-                    Builder $query
-                ): Builder =>
+                fn (Builder $query): Builder =>
                     $query->where(
                         'cart_type',
                         $this->cartType
                     )
             )
-
             ->when(
                 $this->status !== '',
-                fn (
-                    Builder $query
-                ): Builder =>
+                fn (Builder $query): Builder =>
                     $query->where(
                         'operational_status',
                         $this->status
                     )
             )
-
             ->orderBy(
                 $this->sortField,
                 $this->sortDirection
@@ -202,15 +277,16 @@ class Index extends Component
         return view(
             'livewire.backoffice.carts.index',
             [
-                'carts' => $this->cartsQuery()->paginate(15),
-
+                'carts' =>
+                    $this->cartsQuery()->paginate(15),
                 'cartTypes' =>
                     BookingCartSelection::cartTypes(),
-
                 'statuses' => config(
                     'grabone.cart_operational_statuses',
                     []
                 ),
+                'activeFilterCount' =>
+                    $this->activeFilterCount(),
             ]
         );
     }
