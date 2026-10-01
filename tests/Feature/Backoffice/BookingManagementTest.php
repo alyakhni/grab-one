@@ -7,9 +7,12 @@ use App\Livewire\Backoffice\Bookings\EditBooking;
 use App\Livewire\Backoffice\Bookings\Index;
 use App\Models\Booking;
 use App\Models\Cart;
+use App\Models\Customer;
 use App\Models\User;
+use App\Services\FleetAvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class BookingManagementTest extends TestCase
@@ -277,14 +280,12 @@ class BookingManagementTest extends TestCase
         $this->assertDatabaseHas(
             'booking_cart_assignments',
             [
-                'booking_item_id' =>
-                    $booking
-                        ->items()
-                        ->firstOrFail()
-                        ->id,
+                'booking_item_id' => $booking
+                    ->items()
+                    ->firstOrFail()
+                    ->id,
 
-                'cart_id' =>
-                    $cart->id,
+                'cart_id' => $cart->id,
             ]
         );
     }
@@ -366,12 +367,187 @@ class BookingManagementTest extends TestCase
             ->assertDontSee('GO-204');
     }
 
-    public function test_cancelling_confirmed_booking_preserves_assignment_history(): void
+    public function test_reopening_confirmed_booking_as_pending_clears_assignment_and_preserves_booking_details(): void
+    {
+        $user = User::factory()->create();
+
+        $customer = Customer::create([
+            'name' => 'Original Customer',
+            'email' => 'original@example.com',
+            'email_normalized' => 'original@example.com',
+            'phone' => '+5016105100',
+            'phone_normalized' => '+5016105100',
+        ]);
+
+        $cart = Cart::create([
+            'code' => 'GO-205',
+            'cart_type' => '4_seater',
+            'operational_status' => 'active',
+        ]);
+
+        $booking = $this->createBooking([
+            'customer_id' => $customer->id,
+            'full_name' => 'Original Customer',
+            'email' => 'original@example.com',
+            'phone' => '+5016105100',
+            'pickup_at' => '2026-09-20 09:00:00',
+            'return_at' => '2026-09-20 17:00:00',
+            'total_price' => 325.00,
+            'status' => 'confirmed',
+        ]);
+
+        $item = $booking
+            ->items()
+            ->firstOrFail();
+
+        $item
+            ->assignments()
+            ->create([
+                'cart_id' => $cart->id,
+            ]);
+
+        Livewire::actingAs($user)
+            ->test(EditBooking::class, [
+                'booking' => $booking,
+            ])
+            ->set('status', 'pending')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(
+                route('admin.bookings.index')
+            );
+
+        $booking->refresh();
+
+        $this->assertSame(
+            'pending',
+            $booking->status
+        );
+
+        $this->assertSame(
+            $customer->id,
+            $booking->customer_id
+        );
+
+        $this->assertSame(
+            'Original Customer',
+            $booking->full_name
+        );
+
+        $this->assertSame(
+            'original@example.com',
+            $booking->email
+        );
+
+        $this->assertSame(
+            '+5016105100',
+            $booking->phone
+        );
+
+        $this->assertSame(
+            '2026-09-20 09:00:00',
+            $booking->pickup_at
+                ->format('Y-m-d H:i:s')
+        );
+
+        $this->assertSame(
+            '2026-09-20 17:00:00',
+            $booking->return_at
+                ->format('Y-m-d H:i:s')
+        );
+
+        $this->assertSame(
+            '325.00',
+            $booking->total_price
+        );
+
+        $this->assertDatabaseHas(
+            'booking_items',
+            [
+                'id' => $item->id,
+                'booking_id' => $booking->id,
+                'cart_type' => '4_seater',
+                'quantity' => 1,
+            ]
+        );
+
+        $this->assertDatabaseCount(
+            'booking_cart_assignments',
+            0
+        );
+
+        $this->assertDatabaseHas('carts', [
+            'id' => $cart->id,
+            'code' => 'GO-205',
+        ]);
+    }
+
+    public function test_reopening_confirmed_booking_as_pending_releases_cart_for_availability(): void
     {
         $user = User::factory()->create();
 
         $cart = Cart::create([
-            'code' => 'GO-205',
+            'code' => 'GO-206',
+            'cart_type' => '4_seater',
+            'operational_status' => 'active',
+        ]);
+
+        $booking = $this->createBooking([
+            'status' => 'confirmed',
+        ]);
+
+        $booking
+            ->items()
+            ->firstOrFail()
+            ->assignments()
+            ->create([
+                'cart_id' => $cart->id,
+            ]);
+
+        $availability = app(
+            FleetAvailabilityService::class
+        );
+
+        $this->assertFalse(
+            $availability->isCartAvailable(
+                $cart,
+                $booking->pickup_at,
+                $booking->return_at
+            )
+        );
+
+        Livewire::actingAs($user)
+            ->test(EditBooking::class, [
+                'booking' => $booking,
+            ])
+            ->set('status', 'pending')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(
+            $availability->isCartAvailable(
+                $cart,
+                $booking->pickup_at,
+                $booking->return_at
+            )
+        );
+
+        $this->assertDatabaseMissing(
+            'booking_cart_assignments',
+            [
+                'cart_id' => $cart->id,
+            ]
+        );
+    }
+
+    #[DataProvider('historicalStatuses')]
+    public function test_historical_status_transition_preserves_assignment_history_and_releases_cart(
+        string $historicalStatus
+    ): void {
+        $user = User::factory()->create();
+
+        $cart = Cart::create([
+            'code' => 'GO-207',
             'cart_type' => '4_seater',
             'operational_status' => 'active',
         ]);
@@ -390,11 +566,23 @@ class BookingManagementTest extends TestCase
                 'cart_id' => $cart->id,
             ]);
 
+        $availability = app(
+            FleetAvailabilityService::class
+        );
+
+        $this->assertFalse(
+            $availability->isCartAvailable(
+                $cart,
+                $booking->pickup_at,
+                $booking->return_at
+            )
+        );
+
         Livewire::actingAs($user)
             ->test(EditBooking::class, [
                 'booking' => $booking,
             ])
-            ->set('status', 'cancelled')
+            ->set('status', $historicalStatus)
             ->call('save')
             ->assertHasNoErrors()
             ->assertRedirect(
@@ -403,26 +591,42 @@ class BookingManagementTest extends TestCase
 
         $this->assertDatabaseHas('bookings', [
             'id' => $booking->id,
-            'status' => 'cancelled',
+            'status' => $historicalStatus,
         ]);
+
+        $this->assertDatabaseHas(
+            'booking_items',
+            [
+                'id' => $item->id,
+                'booking_id' => $booking->id,
+                'cart_type' => '4_seater',
+                'quantity' => 1,
+            ]
+        );
 
         $this->assertDatabaseHas(
             'booking_cart_assignments',
             [
-                'booking_item_id' =>
-                    $item->id,
+                'booking_item_id' => $item->id,
 
-                'cart_id' =>
-                    $cart->id,
+                'cart_id' => $cart->id,
             ]
+        );
+
+        $this->assertTrue(
+            $availability->isCartAvailable(
+                $cart,
+                $booking->pickup_at,
+                $booking->return_at
+            )
         );
     }
 
     public function test_historical_status_change_cannot_replace_assigned_cart_composition(): void
     {
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
 
-        $booking = \App\Models\Booking::create([
+        $booking = Booking::create([
             'full_name' => 'History Protection',
             'email' => 'history.protection@example.com',
             'phone' => '+5016109999',
@@ -441,7 +645,7 @@ class BookingManagementTest extends TestCase
                 'quantity' => 1,
             ]);
 
-        $cart = \App\Models\Cart::create([
+        $cart = Cart::create([
             'code' => 'HISTORY-001',
             'cart_type' => '4_seater',
             'operational_status' => 'active',
@@ -454,9 +658,9 @@ class BookingManagementTest extends TestCase
                 'cart_id' => $cart->id,
             ]);
 
-        \Livewire\Livewire::actingAs($user)
+        Livewire::actingAs($user)
             ->test(
-                \App\Livewire\Backoffice\Bookings\EditBooking::class,
+                EditBooking::class,
                 [
                     'booking' => $booking,
                 ]
@@ -526,8 +730,7 @@ class BookingManagementTest extends TestCase
         $this->assertDatabaseMissing(
             'booking_items',
             [
-                'booking_id' =>
-                    $booking->id,
+                'booking_id' => $booking->id,
             ]
         );
     }
@@ -555,18 +758,28 @@ class BookingManagementTest extends TestCase
         $this->assertDatabaseMissing(
             'bookings',
             [
-                'id' =>
-                    $first->id,
+                'id' => $first->id,
             ]
         );
 
         $this->assertDatabaseMissing(
             'bookings',
             [
-                'id' =>
-                    $second->id,
+                'id' => $second->id,
             ]
         );
+    }
+
+    public static function historicalStatuses(): array
+    {
+        return [
+            'completed' => [
+                'completed',
+            ],
+            'cancelled' => [
+                'cancelled',
+            ],
+        ];
     }
 
     private function createBooking(
@@ -576,38 +789,27 @@ class BookingManagementTest extends TestCase
         $booking = Booking::create(
             array_merge(
                 [
-                    'full_name' =>
-                        'Test Customer',
+                    'full_name' => 'Test Customer',
 
-                    'email' =>
-                        'customer@example.com',
+                    'email' => 'customer@example.com',
 
-                    'phone' =>
-                        '501-555-0000',
+                    'phone' => '501-555-0000',
 
-                    'hotel_name' =>
-                        'Test Hotel',
+                    'hotel_name' => 'Test Hotel',
 
-                    'pickup_location' =>
-                        'hotel',
+                    'pickup_location' => 'hotel',
 
-                    'pickup_at' =>
-                        '2026-09-10 10:00:00',
+                    'pickup_at' => '2026-09-10 10:00:00',
 
-                    'return_at' =>
-                        '2026-09-12 10:00:00',
+                    'return_at' => '2026-09-12 10:00:00',
 
-                    'special_notes' =>
-                        null,
+                    'special_notes' => null,
 
-                    'flight_number' =>
-                        null,
+                    'flight_number' => null,
 
-                    'total_price' =>
-                        180.00,
+                    'total_price' => 180.00,
 
-                    'status' =>
-                        'pending',
+                    'status' => 'pending',
                 ],
                 $overrides
             )
@@ -616,11 +818,9 @@ class BookingManagementTest extends TestCase
         if ($items === []) {
             $items = [
                 [
-                    'cart_type' =>
-                        '4_seater',
+                    'cart_type' => '4_seater',
 
-                    'quantity' =>
-                        1,
+                    'quantity' => 1,
                 ],
             ];
         }

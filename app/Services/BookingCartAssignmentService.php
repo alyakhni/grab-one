@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\BookingCartAssignment;
 use App\Models\Cart;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -11,8 +12,7 @@ class BookingCartAssignmentService
 {
     public function __construct(
         private FleetAvailabilityService $availability
-    ) {
-    }
+    ) {}
 
     public function confirm(
         Booking $booking,
@@ -28,12 +28,10 @@ class BookingCartAssignmentService
         )
             ->flatten()
             ->map(
-                fn ($id): int =>
-                    (int) $id
+                fn ($id): int => (int) $id
             )
             ->filter(
-                fn (int $id): bool =>
-                    $id > 0
+                fn (int $id): bool => $id > 0
             )
             ->values();
 
@@ -44,8 +42,7 @@ class BookingCartAssignmentService
                 ->count()
         ) {
             throw ValidationException::withMessages([
-                'cart_assignments' =>
-                    'The same cart cannot be assigned more than once.',
+                'cart_assignments' => 'The same cart cannot be assigned more than once.',
             ]);
         }
 
@@ -87,8 +84,7 @@ class BookingCartAssignmentService
 
                 if ($items->isEmpty()) {
                     throw ValidationException::withMessages([
-                        'cart_assignments' =>
-                            'This booking has no cart items to assign.',
+                        'cart_assignments' => 'This booking has no cart items to assign.',
                     ]);
                 }
 
@@ -97,8 +93,7 @@ class BookingCartAssignmentService
                     ->all();
 
                 foreach (
-                    $normalizedAssignments as
-                    $cartType => $cartIds
+                    $normalizedAssignments as $cartType => $cartIds
                 ) {
                     if (
                         $cartIds !== []
@@ -109,8 +104,7 @@ class BookingCartAssignmentService
                         )
                     ) {
                         throw ValidationException::withMessages([
-                            "cart_assignments.{$cartType}" =>
-                                'This cart type is not part of the booking.',
+                            "cart_assignments.{$cartType}" => 'This cart type is not part of the booking.',
                         ]);
                     }
                 }
@@ -128,8 +122,7 @@ class BookingCartAssignmentService
                         !== (int) $item->quantity
                     ) {
                         throw ValidationException::withMessages([
-                            "cart_assignments.{$item->cart_type}" =>
-                                "Select exactly {$item->quantity} cart(s) for this booking item.",
+                            "cart_assignments.{$item->cart_type}" => "Select exactly {$item->quantity} cart(s) for this booking item.",
                         ]);
                     }
 
@@ -143,8 +136,7 @@ class BookingCartAssignmentService
 
                         if (! $cart) {
                             throw ValidationException::withMessages([
-                                "cart_assignments.{$item->cart_type}" =>
-                                    'One of the selected carts does not exist.',
+                                "cart_assignments.{$item->cart_type}" => 'One of the selected carts does not exist.',
                             ]);
                         }
 
@@ -153,8 +145,7 @@ class BookingCartAssignmentService
                             !== $item->cart_type
                         ) {
                             throw ValidationException::withMessages([
-                                "cart_assignments.{$item->cart_type}" =>
-                                    "{$cart->code} is not the correct cart type.",
+                                "cart_assignments.{$item->cart_type}" => "{$cart->code} is not the correct cart type.",
                             ]);
                         }
 
@@ -163,8 +154,7 @@ class BookingCartAssignmentService
                             !== 'active'
                         ) {
                             throw ValidationException::withMessages([
-                                "cart_assignments.{$item->cart_type}" =>
-                                    "{$cart->code} is not operationally active.",
+                                "cart_assignments.{$item->cart_type}" => "{$cart->code} is not operationally active.",
                             ]);
                         }
 
@@ -178,8 +168,7 @@ class BookingCartAssignmentService
                                 )
                         ) {
                             throw ValidationException::withMessages([
-                                "cart_assignments.{$item->cart_type}" =>
-                                    "{$cart->code} is not available for the requested Belize date and time.",
+                                "cart_assignments.{$item->cart_type}" => "{$cart->code} is not available for the requested Belize date and time.",
                             ]);
                         }
                     }
@@ -198,21 +187,56 @@ class BookingCartAssignmentService
                         ->delete();
 
                     foreach (
-                        $cartIds
-                        as $cartId
+                        $cartIds as $cartId
                     ) {
                         $item
                             ->assignments()
                             ->create([
-                                'cart_id' =>
-                                    $cartId,
+                                'cart_id' => $cartId,
                             ]);
                     }
                 }
 
                 $lockedBooking->update([
-                    'status' =>
-                        'confirmed',
+                    'status' => 'confirmed',
+                ]);
+
+                return $lockedBooking
+                    ->fresh([
+                        'items.assignments.cart',
+                    ]);
+            }
+        );
+    }
+
+    public function transitionToPending(
+        Booking $booking
+    ): Booking {
+        return DB::transaction(
+            function () use ($booking): Booking {
+                $lockedBooking = Booking::query()
+                    ->whereKey(
+                        $booking->id
+                    )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if (
+                    $lockedBooking->status
+                    === 'confirmed'
+                ) {
+                    BookingCartAssignment::query()
+                        ->whereIn(
+                            'booking_item_id',
+                            $lockedBooking
+                                ->items()
+                                ->select('id')
+                        )
+                        ->delete();
+                }
+
+                $lockedBooking->update([
+                    'status' => 'pending',
                 ]);
 
                 return $lockedBooking
@@ -229,8 +253,7 @@ class BookingCartAssignmentService
         $normalized = [];
 
         foreach (
-            $cartIdsByType as
-            $cartType => $cartIds
+            $cartIdsByType as $cartType => $cartIds
         ) {
             if (! is_array($cartIds)) {
                 $cartIds = [];
@@ -240,12 +263,10 @@ class BookingCartAssignmentService
                 (string) $cartType
             ] = collect($cartIds)
                 ->map(
-                    fn ($id): int =>
-                        (int) $id
+                    fn ($id): int => (int) $id
                 )
                 ->filter(
-                    fn (int $id): bool =>
-                        $id > 0
+                    fn (int $id): bool => $id > 0
                 )
                 ->unique()
                 ->values()

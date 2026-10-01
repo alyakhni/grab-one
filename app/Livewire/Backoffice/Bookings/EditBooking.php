@@ -21,23 +21,31 @@ class EditBooking extends Component
     public Booking $booking;
 
     public string $full_name = '';
+
     public string $email = '';
+
     public string $phone = '';
+
     public ?string $hotel_name = null;
 
     public string $pickup_location = '';
+
     public string $pickup_at = '';
+
     public string $return_at = '';
 
     public string $cart_selection = '';
+
     public array $cart_quantities = [];
 
     public array $cart_assignments = [];
 
     public ?string $special_notes = null;
+
     public ?string $flight_number = null;
 
     public string $total_price = '0.00';
+
     public string $status = 'pending';
 
     public function mount(
@@ -89,8 +97,7 @@ class EditBooking extends Component
             BookingCartSelection::defaultQuantities();
 
         foreach (
-            BookingCartSelection::cartTypes()
-            as $code => $label
+            BookingCartSelection::cartTypes() as $code => $label
         ) {
             $this->cart_assignments[
                 $code
@@ -98,8 +105,7 @@ class EditBooking extends Component
         }
 
         foreach (
-            $booking->items
-            as $item
+            $booking->items as $item
         ) {
             $this->cart_quantities[
                 $item->cart_type
@@ -111,8 +117,7 @@ class EditBooking extends Component
                 ->assignments
                 ->pluck('cart_id')
                 ->map(
-                    fn ($id): string =>
-                        (string) $id
+                    fn ($id): string => (string) $id
                 )
                 ->values()
                 ->all();
@@ -146,8 +151,7 @@ class EditBooking extends Component
             )
         )
             ->map(
-                fn ($quantity): int =>
-                    (int) $quantity
+                fn ($quantity): int => (int) $quantity
             )
             ->sortKeys()
             ->all();
@@ -251,19 +255,16 @@ class EditBooking extends Component
                 ->delete();
 
             foreach (
-                $itemQuantities
-                as $cartType => $quantity
+                $itemQuantities as $cartType => $quantity
             ) {
                 $this->booking
                     ->items()
                     ->updateOrCreate(
                         [
-                            'cart_type' =>
-                                $cartType,
+                            'cart_type' => $cartType,
                         ],
                         [
-                            'quantity' =>
-                                $quantity,
+                            'quantity' => $quantity,
                         ]
                     );
             }
@@ -282,9 +283,21 @@ class EditBooking extends Component
                 return;
             }
 
+            if (
+                $requestedStatus
+                === 'pending'
+            ) {
+                app(
+                    BookingCartAssignmentService::class
+                )->transitionToPending(
+                    $this->booking->fresh()
+                );
+
+                return;
+            }
+
             $this->booking->update([
-                'status' =>
-                    $requestedStatus,
+                'status' => $requestedStatus,
             ]);
         });
 
@@ -324,8 +337,7 @@ class EditBooking extends Component
             ])
             ->mapWithKeys(
                 fn ($item): array => [
-                    $item->cart_type =>
-                        (int) $item->quantity,
+                    $item->cart_type => (int) $item->quantity,
                 ]
             )
             ->sortKeys()
@@ -458,8 +470,7 @@ class EditBooking extends Component
             $available = [];
 
             foreach (
-                array_keys($itemQuantities)
-                as $cartType
+                array_keys($itemQuantities) as $cartType
             ) {
                 $available[$cartType] =
                     $availability->availableCarts(
@@ -486,22 +497,18 @@ class EditBooking extends Component
                     []
                 ),
 
-                'cartTypes' =>
-                    BookingCartSelection::cartTypes(),
+                'cartTypes' => BookingCartSelection::cartTypes(),
 
-                'selectionOptions' =>
-                    BookingCartSelection::selectionOptions(),
+                'selectionOptions' => BookingCartSelection::selectionOptions(),
 
                 'statuses' => config(
                     'grabone.booking_statuses',
                     []
                 ),
 
-                'showCartAssignments' =>
-                    true,
+                'showCartAssignments' => true,
 
-                'availableCartsByType' =>
-                    $this->availableCartsByType(),
+                'availableCartsByType' => $this->availableCartsByType(),
             ]
         );
     }

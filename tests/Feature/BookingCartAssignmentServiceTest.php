@@ -56,11 +56,9 @@ class BookingCartAssignmentServiceTest extends TestCase
         $this->assertDatabaseHas(
             'booking_cart_assignments',
             [
-                'booking_item_id' =>
-                    $booking->items()->firstOrFail()->id,
+                'booking_item_id' => $booking->items()->firstOrFail()->id,
 
-                'cart_id' =>
-                    $cart->id,
+                'cart_id' => $cart->id,
             ]
         );
     }
@@ -117,6 +115,98 @@ class BookingCartAssignmentServiceTest extends TestCase
         $this->assertDatabaseCount(
             'booking_cart_assignments',
             3
+        );
+    }
+
+    public function test_reopening_confirmed_mixed_booking_as_pending_clears_all_assignments_and_preserves_items(): void
+    {
+        $fourSeater = $this->createCart(
+            'GO-113',
+            '4_seater'
+        );
+
+        $sixSeater = $this->createCart(
+            'GO-114',
+            '6_seater'
+        );
+
+        $booking = $this->createBooking(
+            [
+                [
+                    'cart_type' => '4_seater',
+                    'quantity' => 1,
+                ],
+                [
+                    'cart_type' => '6_seater',
+                    'quantity' => 1,
+                ],
+            ],
+            [
+                'status' => 'confirmed',
+            ]
+        );
+
+        $items = $booking
+            ->items()
+            ->get()
+            ->keyBy('cart_type');
+
+        $items
+            ->get('4_seater')
+            ->assignments()
+            ->create([
+                'cart_id' => $fourSeater->id,
+            ]);
+
+        $items
+            ->get('6_seater')
+            ->assignments()
+            ->create([
+                'cart_id' => $sixSeater->id,
+            ]);
+
+        $pending = $this->assignments
+            ->transitionToPending(
+                $booking
+            );
+
+        $this->assertSame(
+            'pending',
+            $pending->status
+        );
+
+        $this->assertDatabaseHas(
+            'booking_items',
+            [
+                'id' => $items
+                    ->get('4_seater')
+                    ->id,
+                'booking_id' => $booking->id,
+                'cart_type' => '4_seater',
+                'quantity' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'booking_items',
+            [
+                'id' => $items
+                    ->get('6_seater')
+                    ->id,
+                'booking_id' => $booking->id,
+                'cart_type' => '6_seater',
+                'quantity' => 1,
+            ]
+        );
+
+        $this->assertDatabaseCount(
+            'booking_cart_assignments',
+            0
+        );
+
+        $this->assertDatabaseCount(
+            'carts',
+            2
         );
     }
 
@@ -271,10 +361,8 @@ class BookingCartAssignmentServiceTest extends TestCase
             ],
             [
                 'status' => 'confirmed',
-                'pickup_at' =>
-                    '2026-09-10 10:00:00',
-                'return_at' =>
-                    '2026-09-10 14:00:00',
+                'pickup_at' => '2026-09-10 10:00:00',
+                'return_at' => '2026-09-10 14:00:00',
             ]
         );
 
@@ -297,10 +385,8 @@ class BookingCartAssignmentServiceTest extends TestCase
                 ],
             ],
             [
-                'pickup_at' =>
-                    '2026-09-10 14:30:00',
-                'return_at' =>
-                    '2026-09-10 18:00:00',
+                'pickup_at' => '2026-09-10 14:30:00',
+                'return_at' => '2026-09-10 18:00:00',
             ]
         );
 
@@ -443,29 +529,21 @@ class BookingCartAssignmentServiceTest extends TestCase
         $booking = Booking::create(
             array_merge(
                 [
-                    'full_name' =>
-                        'Assignment Test Customer',
+                    'full_name' => 'Assignment Test Customer',
 
-                    'email' =>
-                        'assignment@example.com',
+                    'email' => 'assignment@example.com',
 
-                    'phone' =>
-                        '501-555-2000',
+                    'phone' => '501-555-2000',
 
-                    'pickup_location' =>
-                        'hotel',
+                    'pickup_location' => 'hotel',
 
-                    'pickup_at' =>
-                        '2026-09-10 10:00:00',
+                    'pickup_at' => '2026-09-10 10:00:00',
 
-                    'return_at' =>
-                        '2026-09-10 14:00:00',
+                    'return_at' => '2026-09-10 14:00:00',
 
-                    'total_price' =>
-                        0.00,
+                    'total_price' => 0.00,
 
-                    'status' =>
-                        'pending',
+                    'status' => 'pending',
                 ],
                 $overrides
             )
