@@ -137,6 +137,120 @@ class CartManagementTest extends TestCase
         ]);
     }
 
+    public function test_completed_assignment_history_prevents_cart_type_change(): void
+    {
+        $user = User::factory()->create();
+
+        $cart = Cart::create([
+            'code' => 'GO-022',
+            'cart_type' => '4_seater',
+            'operational_status' => 'active',
+        ]);
+
+        [$item, $assignment] = $this->assignCartToBooking(
+            $cart,
+            'completed'
+        );
+
+        $itemSnapshot = $item->getAttributes();
+        $assignmentSnapshot = $assignment->getAttributes();
+
+        Livewire::actingAs($user)
+            ->test(EditCart::class, [
+                'cart' => $cart,
+            ])
+            ->set('cart_type', '6_seater')
+            ->call('save')
+            ->assertHasErrors(['cart_type'])
+            ->assertSee(
+                'Cart type cannot be changed after the cart has assignment history.'
+            );
+
+        $this->assertDatabaseHas('carts', [
+            'id' => $cart->id,
+            'cart_type' => '4_seater',
+        ]);
+
+        $this->assertEquals(
+            $itemSnapshot,
+            $item->fresh()->getAttributes()
+        );
+
+        $this->assertEquals(
+            $assignmentSnapshot,
+            $assignment->fresh()->getAttributes()
+        );
+    }
+
+    public function test_unused_cart_type_can_be_changed(): void
+    {
+        $user = User::factory()->create();
+
+        $cart = Cart::create([
+            'code' => 'GO-023',
+            'cart_type' => '4_seater',
+            'operational_status' => 'active',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(EditCart::class, [
+                'cart' => $cart,
+            ])
+            ->set('cart_type', '6_seater')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('admin.carts.index'));
+
+        $this->assertDatabaseHas('carts', [
+            'id' => $cart->id,
+            'cart_type' => '6_seater',
+        ]);
+    }
+
+    public function test_assigned_cart_operational_status_can_be_changed_when_type_is_unchanged(): void
+    {
+        $user = User::factory()->create();
+
+        $cart = Cart::create([
+            'code' => 'GO-024',
+            'cart_type' => '4_seater',
+            'operational_status' => 'active',
+        ]);
+
+        [$item, $assignment] = $this->assignCartToBooking(
+            $cart,
+            'completed'
+        );
+
+        Livewire::actingAs($user)
+            ->test(EditCart::class, [
+                'cart' => $cart,
+            ])
+            ->set('operational_status', 'maintenance')
+            ->set('notes', 'Scheduled service')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('admin.carts.index'));
+
+        $this->assertDatabaseHas('carts', [
+            'id' => $cart->id,
+            'cart_type' => '4_seater',
+            'operational_status' => 'maintenance',
+            'notes' => 'Scheduled service',
+        ]);
+
+        $this->assertDatabaseHas('booking_items', [
+            'id' => $item->id,
+            'cart_type' => '4_seater',
+        ]);
+
+        $this->assertDatabaseHas('booking_cart_assignments', [
+            'id' => $assignment->id,
+            'booking_item_id' => $item->id,
+            'cart_id' => $cart->id,
+        ]);
+    }
+
     public function test_authenticated_user_can_delete_unassigned_cart(): void
     {
         $user = User::factory()->create();
@@ -194,5 +308,32 @@ class CartManagementTest extends TestCase
             'id' => $cart->id,
             'code' => 'GO-040',
         ]);
+    }
+
+    private function assignCartToBooking(
+        Cart $cart,
+        string $status
+    ): array {
+        $booking = Booking::create([
+            'full_name' => 'Historical Fleet Customer',
+            'email' => 'history@example.com',
+            'phone' => '501-555-0420',
+            'pickup_location' => 'hotel',
+            'pickup_at' => '2026-09-10 10:00:00',
+            'return_at' => '2026-09-12 10:00:00',
+            'total_price' => 0.00,
+            'status' => $status,
+        ]);
+
+        $item = $booking->items()->create([
+            'cart_type' => $cart->cart_type,
+            'quantity' => 1,
+        ]);
+
+        $assignment = $item->assignments()->create([
+            'cart_id' => $cart->id,
+        ]);
+
+        return [$item, $assignment];
     }
 }

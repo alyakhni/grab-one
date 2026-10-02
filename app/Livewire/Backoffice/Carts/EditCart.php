@@ -77,6 +77,18 @@ class EditCart extends Component
             ],
         ]);
 
+        if (
+            $validated['cart_type'] !== $this->cart->cart_type
+            && $this->cart->assignments()->exists()
+        ) {
+            $this->addError(
+                'cart_type',
+                'Cart type cannot be changed after the cart has assignment history.'
+            );
+
+            return;
+        }
+
         $validated['notes'] = blank(
             $validated['notes'] ?? null
         )
@@ -123,8 +135,7 @@ class EditCart extends Component
         return view(
             'livewire.backoffice.carts.edit',
             [
-                'cartTypes' =>
-                    BookingCartSelection::cartTypes(),
+                'cartTypes' => BookingCartSelection::cartTypes(),
 
                 'statuses' => config(
                     'grabone.cart_operational_statuses',
