@@ -27,7 +27,7 @@ It is retained temporarily as a local checkpoint after remote `main` verificatio
 ## Runtime baseline
 
 - PHP 8.5.9
-- Laravel 13.30.0
+- Laravel 13.34.0
 - Livewire 4.4.1
 - Node 24.15.0
 - npm 11.12.1

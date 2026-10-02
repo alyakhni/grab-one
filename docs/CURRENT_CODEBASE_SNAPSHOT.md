@@ -27,7 +27,7 @@ The old feature branch remains available temporarily as a local checkpoint after
 ## Runtime
 
 - PHP 8.5.9
-- Laravel 13.30.0
+- Laravel 13.34.0
 - Composer 2.10.2
 - Livewire 4.4.1
 - Node 24.15.0
@@ -281,7 +281,7 @@ Do not restore the old Phase 2 snapshot because IDs were subsequently reused.
 
 Resolved security baseline:
 
-- Laravel 13.30.0
+- Laravel 13.34.0
 - Livewire 4.4.1
 - Vite 7.3.6
 - Composer audit: 0 advisories
