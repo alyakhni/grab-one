@@ -6,7 +6,7 @@
 
 ## Current stage
 
-The Laravel booking/fleet operational foundation is complete, fully UAT-verified, and merged locally into `main`.
+The Laravel booking/fleet operational foundation is complete, fully UAT-verified, merged into `main`, pushed to `origin/main`, and remote-verified.
 
 Current local branch:
 
@@ -20,9 +20,9 @@ The previous feature branch is retained as a checkpoint:
 
 `feature/booking-fleet-foundation`
 
-Do not delete it until `main` has been pushed and remote state is verified.
+It is retained temporarily as a local checkpoint after remote `main` verification.
 
-`origin/main` has not yet been updated with the booking/fleet foundation.
+`origin/main` is synchronized with local `main`.
 
 ## Runtime baseline
 
@@ -170,7 +170,7 @@ Do not restore the old Phase 2 database snapshot because IDs were subsequently r
 
 ## Git state
 
-The booking/fleet feature was fast-forward merged locally into `main`.
+The booking/fleet feature was fast-forward merged into `main` and pushed to `origin/main`.
 
 Pre-documentation merge HEAD:
 
@@ -185,16 +185,18 @@ Important final commits include:
 
 The feature branch remains present locally as a checkpoint.
 
-Nothing from this completed local merge has been pushed yet.
+Local `main` and `origin/main` were verified synchronized after the merge and documentation checkpoint.
 
 ## Next action
 
-1. commit this updated handoff/snapshot documentation on `main`
-2. verify local `main`
-3. push `main` to `origin`
-4. verify remote `main`
-5. keep or remove the old feature branch only after remote verification
-6. create a new dedicated branch for the planned Next.js public frontend
+The Laravel operational foundation is closed and `main` is remote-verified.
+
+Next development action:
+
+1. create a new dedicated branch from verified `main`
+2. begin the planned Next.js public frontend
+3. keep Laravel as backend/business/API/Admin
+4. preserve all booking, fleet, identity, privacy, and Belize-time invariants
 
 Do not begin Next.js work on the completed booking/fleet branch.
 
@@ -219,3 +221,4 @@ No Filament.
 No DB-driven CMS/settings architecture.
 
 Public content, navigation, FAQ, SEO, guides, labels, and site definitions remain source-controlled.
+

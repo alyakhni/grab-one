@@ -20,9 +20,9 @@ Latest application commit:
 
 Working tree was clean after merge verification.
 
-Remote `origin/main` has not yet received these local commits.
+Remote `origin/main` is synchronized with the merged local `main` baseline.
 
-The old feature branch remains available as a checkpoint until remote verification is complete.
+The old feature branch remains available temporarily as a local checkpoint after remote verification.
 
 ## Runtime
 
@@ -289,12 +289,9 @@ Resolved security baseline:
 
 ## Next planned stage
 
-After:
+The Laravel operational foundation is merged, pushed, and remote-verified on `main`.
 
-1. committing this documentation update
-2. pushing and verifying `main`
-
-create a new dedicated branch for the Next.js public frontend.
+Create a new dedicated branch from verified `main` for the Next.js public frontend.
 
 Do not expand Next.js work on the completed booking/fleet branch.
 
@@ -305,3 +302,4 @@ No online payment checkout is planned.
 Booking remains:
 
 request → Admin reviews availability/final price → Customer pays directly/in person.
+
