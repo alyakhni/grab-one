@@ -1,4 +1,4 @@
-﻿# Grab One – Current Codebase Snapshot
+# Grab One – Current Codebase Snapshot
 
 ## Git
 
@@ -302,4 +302,3 @@ No online payment checkout is planned.
 Booking remains:
 
 request → Admin reviews availability/final price → Customer pays directly/in person.
-

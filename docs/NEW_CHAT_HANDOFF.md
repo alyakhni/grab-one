@@ -1,4 +1,4 @@
-﻿# Grab One – New Chat Handoff
+# Grab One – New Chat Handoff
 
 ## Preferred opening
 
@@ -221,4 +221,3 @@ No Filament.
 No DB-driven CMS/settings architecture.
 
 Public content, navigation, FAQ, SEO, guides, labels, and site definitions remain source-controlled.
-
